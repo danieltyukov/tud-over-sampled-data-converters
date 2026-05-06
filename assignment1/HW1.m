@@ -26,7 +26,6 @@ for n_pts = 400:600          % simulation length = filter length
         Y(i,:) = 2*(W(i,:) >= 0) - 1;
     end
     
-    % Apply sinc1 (rectangular) filter: sum(y .* h) / sum(h), summing over rows
     rect_filt = ones(n_pts, 1);                          
     out_a     = sum(Y .* rect_filt, 1) / sum(rect_filt); 
 
@@ -38,7 +37,6 @@ end
 
 min_L_sinc1 = n_pts;   % filter length at which 8-bit INL was first satisfied
 
-% *** CONCLUSION A: Minimum sinc1 filter length for 8-bit resolution = min_L_sinc1 ***
 fprintf('Part A  –  Minimum sinc1 filter length for 8-bit: L = %d\n', min_L_sinc1);
 fprintf('           (8-bit INL limit = %.5f = 0.5 LSB)\n\n', INL_lim);
 
@@ -112,18 +110,16 @@ for n_pts = 400:600          % simulation length = filter length
     N_sim = 2001;           % number of DC input values to sweep
     input_range = linspace(-1 + 1/N_sim, 1 - 1/N_sim, N_sim);
     
-    % W and Y are (n_pts × N_sim): each column = one DC input, each row = one time step
     W = zeros(n_pts, N_sim);
     Y = zeros(n_pts, N_sim);
     W(1,:) = 0;
     Y(1,:) = 1;                       
     
     for i = 2:n_pts
-        W(i,:) = W(i-1,:) + input_range - Y(i-1,:);  % input_range constant per column
+        W(i,:) = W(i-1,:) + input_range - Y(i-1,:);  
         Y(i,:) = 2*(W(i,:) >= 0) - 1;
     end
     
-    % Apply sinc2 (rectangular) filter: sum(y .* h) / sum(h), summing over rows
     sinc2_filt = window(@triang,n_pts);                          
     out_b     = sum(Y .* sinc2_filt, 1) / sum(sinc2_filt); 
 
@@ -135,11 +131,9 @@ end
 
 min_L_sinc2 = n_pts;   % filter length at which 8-bit INL was first satisfied
 
-% *** CONCLUSION B: Minimum sinc1 filter length for 8-bit resolution = min_L_sinc2 ***
 fprintf('Part B  –  Minimum sinc2 filter length for 8-bit: L = %d\n', min_L_sinc2);
 fprintf('           (8-bit INL limit = %.5f = 0.5 LSB)\n\n', INL_lim);
 
-% out_a already holds the filter output for the minimum L; compute INL
 INL_b = out_b - input_range;
 
 % --- Figure 3: Full range  -1 < x < 1 ---
@@ -166,9 +160,8 @@ grid on;
 % --- Figure 4: Zoomed range  -0.01 < x < 0.01 ---
 n_pts = min_L_sinc2;
 N_sim = 2001;           % number of DC input values to sweep
-input_range = linspace(-0.01 + 0.01/N_sim, 0.01 - 0.01/N_sim, N_sim);  % (1 × N_sim)
+input_range = linspace(-0.01 + 0.01/N_sim, 0.01 - 0.01/N_sim, N_sim);
     
-% W and Y are (n_pts × N_sim): each column = one DC input, each row = one time step
 W = zeros(n_pts, N_sim);
 Y = zeros(n_pts, N_sim);
 W(1,:) = 0;
@@ -179,7 +172,6 @@ for i = 2:n_pts
     Y(i,:) = 2*(W(i,:) >= 0) - 1;
 end
 
-% Apply sinc2 (rectangular) filter: sum(y .* h) / sum(h), summing over rows
 sinc2_filt = window(@triang,n_pts);                          
 out_b     = sum(Y .* sinc2_filt, 1) / sum(sinc2_filt); 
 
@@ -205,18 +197,15 @@ grid on;
 
 %% Part C
 % 9-bit resolution target
-LSB_9   = 2 / 2^9;      % LSB for 8-bit and full-scale range = 2 (from -1 to 1)
+LSB_9   = 2 / 2^9;      % LSB for 9-bit and full-scale range = 2 (from -1 to 1)
 INL_lim = 0.5 * LSB_9;  % Max allowed |INL| = 0.5 LSB
 
-% Loop over filter lengths until 8-bit INL is achieved
-% Simulation length = filter length = npts
 for gain = 16300:1:100000
     p = 1 - 1/gain;            % Loss factor
     n_pts = 1024;           % simulation length = filter length
     N_sim = 2001;           % number of DC input values to sweep
     input_range = linspace(-1 + 1/N_sim, 1 - 1/N_sim, N_sim);
     
-    % W and Y are (n_pts × N_sim): each column = one DC input, each row = one time step
     W = zeros(n_pts, N_sim);
     Y = zeros(n_pts, N_sim);
     W(1,:) = 0;
@@ -227,7 +216,6 @@ for gain = 16300:1:100000
         Y(i,:) = 2*(W(i,:) >= 0) - 1;
     end
     
-    % Apply sinc1 (rectangular) filter: sum(y .* h) / sum(h), summing over rows
     rect_filt = ones(n_pts, 1);                          
     out_c     = sum(Y .* rect_filt, 1) / sum(rect_filt); 
 
@@ -237,9 +225,8 @@ for gain = 16300:1:100000
 end
 
 
-min_gain_sinc1 = gain;   % filter length at which 8-bit INL was first satisfied
+min_gain_sinc1 = gain;  
 
-% *** CONCLUSION C: Minimum gain with sinc1 filter length for 9-bit resolution = min_gain_sinc1 ***
 fprintf('Part C  –  Minimum gain with 1024-tap sinc1 for 9-bit: gain = %d\n', min_gain_sinc1);
 fprintf('           (9-bit INL limit = %.5f = 0.5 LSB)\n\n', INL_lim);
 
@@ -268,12 +255,6 @@ title('INL   (-1 < x < 1)');
 grid on;
 
 %% Part D
-% 9-bit resolution target
-LSB_9   = 2 / 2^9;      % LSB for 8-bit and full-scale range = 2 (from -1 to 1)
-INL_lim = 0.5 * LSB_9;  % Max allowed |INL| = 0.5 LSB
-
-% Loop over filter lengths until 8-bit INL is achieved
-% Simulation length = filter length = npts
 for gain = 450:1:100000
     p = 1 - 1/gain;            % Loss factor
     n_pts = 1024;           % simulation length = filter length
@@ -291,7 +272,6 @@ for gain = 450:1:100000
         Y(i,:) = 2*(W(i,:) >= 0) - 1;
     end
     
-    % Apply sinc1 (rectangular) filter: sum(y .* h) / sum(h), summing over rows
     sinc2_filt = window(@triang,n_pts);                          
     out_d     = sum(Y .* sinc2_filt, 1) / sum(sinc2_filt);
 
@@ -303,16 +283,14 @@ end
 
 min_gain_sinc2 = gain;   % filter length at which 8-bit INL was first satisfied
 
-% *** CONCLUSION C: Minimum gain with sinc1 filter length for 9-bit resolution = min_gain_sinc1 ***
 fprintf('Part D  –  Minimum gain with 1024-tap sinc2 for 9-bit: gain = %d\n', min_gain_sinc2);
 fprintf('           (9-bit INL limit = %.5f = 0.5 LSB)\n\n', INL_lim);
 
-% out_a already holds the filter output for the minimum L; compute INL
 INL_d = out_d - input_range;
 
 % --- Figure 6: Full range  -1 < x < 1 ---
 figure(6);
-sgtitle(sprintf('Sinc decimation filter  (A = %d)', min_gain_sinc2));
+sgtitle(sprintf('Sinc^2 decimation filter  (A = %d)', min_gain_sinc2));
 
 subplot(2,1,1);
 plot(input_range, out_d, 'b', input_range, input_range, 'r--', 'LineWidth', 1);
@@ -330,3 +308,9 @@ hold off;
 xlabel('Input x');  ylabel('INL (LSB)');
 title('INL   (-1 < x < 1)');
 grid on;
+
+% From the minimum filter lengths and gain required, it can be notices that
+% the minimum filter length only decreases slightly when using a sinc2
+% filter, whereas the accumulator gain decreases significantly when using a
+% sinc2 filter. Thus the sinc2 filter is much better compared to the sinc
+% filter.
