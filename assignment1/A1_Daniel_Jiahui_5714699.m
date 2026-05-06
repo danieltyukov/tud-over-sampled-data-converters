@@ -5,26 +5,29 @@
 %
 % Filename: A1_Daniel_Jiahui_5714699.m
 
-% Part A  -  Minimum sinc1 filter length for 8-bit: L = 512
+% Question A  -  Minimum sinc1 filter length for 8-bit: L = 512
 %
-% Part B  -  Minimum sinc2 filter length for 8-bit: L = 503
+% Question B  -  Minimum sinc2 filter length for 8-bit: L = 503
 %
-% Part C  -  Minimum gain with 1024-tap sinc1 for 9-bit: gain = 49279
+% Question C  -  Minimum gain with 1024-tap sinc1 for 9-bit: gain = 49279
 %
-% Part D  -  Minimum gain with 1024-tap sinc2 for 9-bit: gain = 499
+% Question D  -  Minimum gain with 1024-tap sinc2 for 9-bit: gain = 499
 
 % From the minimum filter lengths and gain required, it can be noticed that
 % the minimum filter length only decreases slightly when using a sinc2
 % filter, whereas the accumulator gain decreases significantly when using a
 % sinc2 filter. Thus the sinc2 filter is much better compared to the sinc
-% filter. Furthermore it can be noticed that the length required for part A
-% is a exactly a power of two.
+% filter. Furthermore it can be noticed that the length required for
+% Question A is a exactly a power of two.
 
-%% Part A
+%% Question A
 %************************************************************************
-% Part A - Minimum sinc1 filter length for 8-bit: L = 512
+% 1) Minimum sinc1 filter length for 8-bit: L = 512
 %************************************************************************
-clear; close all; format long; clc;
+clear
+close all;
+format long;
+clc;
 
 % 8-bit resolution target
 LSB_8   = 2 / 2^8;      % LSB for 8-bit and full-scale range = 2 (from -1 to 1)
@@ -58,7 +61,7 @@ end
 
 min_L_sinc1 = n_pts;   % filter length at which 8-bit INL was first satisfied
 
-fprintf('Part A  -  Minimum sinc1 filter length for 8-bit: L = %d\n', min_L_sinc1);
+fprintf('Question A  -  Minimum sinc1 filter length for 8-bit: L = %d\n', min_L_sinc1);
 fprintf('           (8-bit INL limit = %.5f = 0.5 LSB)\n\n', INL_lim);
 
 % out_a already holds the filter output for the minimum L; compute INL
@@ -126,11 +129,14 @@ xlabel('Input x');  ylabel('INL (LSB)');
 title('INL   (-0.01 < x < 0.01)');
 grid on;
 
-%% Part B
+%% Question B
 %************************************************************************
-% Part B - Minimum sinc2 filter length for 8-bit: L = 503
+% 1) Minimum sinc2 filter length for 8-bit: L = 503
 %************************************************************************
-clear; close all; format long; clc;
+clear
+close all;
+format long;
+clc;
 
 % 8-bit resolution target
 LSB_8   = 2 / 2^8;      % LSB for 8-bit and full-scale range = 2 (from -1 to 1)
@@ -161,7 +167,7 @@ end
 
 min_L_sinc2 = n_pts;   % filter length at which 8-bit INL was first satisfied
 
-fprintf('Part B  -  Minimum sinc2 filter length for 8-bit: L = %d\n', min_L_sinc2);
+fprintf('Question B  -  Minimum sinc2 filter length for 8-bit: L = %d\n', min_L_sinc2);
 fprintf('           (8-bit INL limit = %.5f = 0.5 LSB)\n\n', INL_lim);
 
 INL_b = out_b - input_range;
@@ -226,11 +232,14 @@ xlabel('Input x');  ylabel('INL (LSB)');
 title('INL   (-0.01 < x < 0.01)');
 grid on;
 
-%% Part C
+%% Question C
 %************************************************************************
-% Part C - Minimum gain with 1024-tap sinc1 for 9-bit: gain = 49279
+% 1) Minimum gain with 1024-tap sinc1 for 9-bit: gain = 49279
 %************************************************************************
-clear; close all; format long; clc;
+clear
+close all;
+format long;
+clc;
 
 % 9-bit resolution target
 LSB_9   = 2 / 2^9;      % LSB for 9-bit and full-scale range = 2 (from -1 to 1)
@@ -263,7 +272,7 @@ end
 
 min_gain_sinc1 = gain;  
 
-fprintf('Part C  -  Minimum gain with 1024-tap sinc1 for 9-bit: gain = %d\n', min_gain_sinc1);
+fprintf('Question C  -  Minimum gain with 1024-tap sinc1 for 9-bit: gain = %d\n', min_gain_sinc1);
 fprintf('           (9-bit INL limit = %.5f = 0.5 LSB)\n\n', INL_lim);
 
 % out_a already holds the filter output for the minimum L; compute INL
@@ -290,11 +299,14 @@ xlabel('Input x');  ylabel('INL (LSB)');
 title('INL   (-1 < x < 1)');
 grid on;
 
-%% Part D
+%% Question D
 %************************************************************************
-% Part D - Minimum gain with 1024-tap sinc2 for 9-bit: gain = 499
+% 1) Minimum gain with 1024-tap sinc2 for 9-bit: gain = 499
 %************************************************************************
-clear; close all; format long; clc;
+clear
+close all;
+format long;
+clc;
 
 % 9-bit resolution target
 LSB_9   = 2 / 2^9;      % LSB for 9-bit and full-scale range = 2 (from -1 to 1)
@@ -328,7 +340,7 @@ end
 
 min_gain_sinc2 = gain;   % accumulator gain at which 9-bit INL was first satisfied
 
-fprintf('Part D  -  Minimum gain with 1024-tap sinc2 for 9-bit: gain = %d\n', min_gain_sinc2);
+fprintf('Question D  -  Minimum gain with 1024-tap sinc2 for 9-bit: gain = %d\n', min_gain_sinc2);
 fprintf('           (9-bit INL limit = %.5f = 0.5 LSB)\n\n', INL_lim);
 
 INL_d = out_d - input_range;
