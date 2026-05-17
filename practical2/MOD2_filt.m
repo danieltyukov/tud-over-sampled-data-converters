@@ -44,6 +44,7 @@ subplot(2,1,1);plot(w1,'k','LineWidth',1.5);
 xlabel('Samples'); ylabel('w1 (1st Accumulator)');grid;
 subplot(2,1,2);plot(w2,'k','LineWidth',1.5);
 xlabel('Samples'); ylabel('w2 (2nd Accumulator)');grid;
+saveas(gcf,'results/MOD2_filt_accumulators.png');
     
 % Defining a Kaiser FIR filter at the output of the second order modulator
 %************************************************************************
@@ -65,6 +66,7 @@ subplot(2,1,1);plot(y,'k','LineWidth',1.5);
 xlabel('Samples'); ylabel('y');grid;
 subplot(2,1,2);plot(y_kai_filt,'k');ylabel('y-kai');
 xlabel('Samples'); ylabel('filtered y');grid;
+saveas(gcf,'results/MOD2_filt_bitstream.png');
 
 % Printing the decimated values in Matlab command prompt
 %************************************************************************

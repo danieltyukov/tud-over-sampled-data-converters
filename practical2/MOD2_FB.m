@@ -42,6 +42,7 @@ subplot(3,1,3); plot(y,'k','LineWidth',1.5);
 xlabel('Samples'); ylabel('y (Bitstream)');  grid on;
 sgtitle(sprintf('Unscaled FB MOD2 -- max|w1|=%.2f, max|w2|=%.2f', ...
                 max(abs(w1)), max(abs(w2))));
+saveas(gcf,'results/MOD2_FB_unscaled_time.png');
 
 %************************************************************************
 % Display the 'frequency domain' output values
@@ -57,6 +58,7 @@ figure(2);
 semilogx((1:N/2)*fres,ffty(1:N/2),'-r','LineWidth',1);
 grid on; xlabel('Frequency'); ylabel('Amplitude [dB]');
 title('Output spectrum of the 2nd order feed-back sigma delta modulator');
+saveas(gcf,'results/MOD2_FB_unscaled_spectrum.png');
 
 %%% [MOD] === Report the unscaled swings ===================================
 maxw1_orig = max(abs(w1));
@@ -112,6 +114,7 @@ subplot(3,1,3); plot(y_s,'k','LineWidth',1.0);
 xlabel('Samples'); ylabel('y'); grid on;
 sgtitle(sprintf('Scaled FB MOD2 -- max|w1|=%.3f, max|w2|=%.3f', ...
                 max(abs(w1_s)), max(abs(w2_s))));
+saveas(gcf,'results/MOD2_FB_scaled_time.png');
 
 %%% [MOD] Spectrum of scaled modulator and overlay vs unscaled (STF check)
 ffty_s = abs(fft(y_s' .* kaiser(length(y_s),20)));
@@ -123,6 +126,7 @@ semilogx((1:N/2)*fres, ffty_s(1:N/2),'b', 'LineWidth', 1.0); hold off;
 grid on; xlabel('Frequency'); ylabel('Amplitude [dB]');
 legend('unscaled','scaled', 'Location','southeast');
 title('FB MOD2: spectrum unscaled vs scaled (STF + NTF check)');
+saveas(gcf,'results/MOD2_FB_spectrum_compare.png');
 
 %%% [MOD] Quantify in-band SNR before vs after scaling
 fb_band     = 4;                              % signal bandwidth [kHz]

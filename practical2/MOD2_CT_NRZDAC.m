@@ -108,6 +108,7 @@ end
     xlabel('Samples'); ylabel('W2 (2nd Integrator)');grid;
     subplot(3,1,3);plot(y,'k','LineWidth',1.5);
     xlabel('Samples'); ylabel('Y (Bitstream)');grid;
+    saveas(gcf,'results/MOD2_CT_NRZDAC_time.png');
 
 
     
@@ -129,5 +130,26 @@ end
 
     xlabel('Frequency');ylabel('Amplitude [dB]');title('Output spectrum of the continuous time 2nd order feed forward sigma delta modulator');
     grid on;
-    
-    figure(3);plot(DAC_Test(1:1000));hold on;plot(DAC_Test(1:1000),'r*');title('A few samples of the feedback DAC signal with asymmetric rise and fall times');
+    saveas(gcf,'results/MOD2_CT_NRZDAC_spectrum.png');
+
+    figure(3);plot(DAC_Test(1:1000));hold on;plot(DAC_Test(1:1000),'r*');
+    title('A few samples of the feedback DAC signal with asymmetric rise and fall times');
+    saveas(gcf,'results/MOD2_CT_NRZDAC_waveform.png');
+
+%%% [MOD] === Exercise 2.8 follow-up: compute in-band SNR for the FF CT MOD ==
+%%% [MOD] Quick SNR over a baseband fb that covers our 10 kHz input safely.
+fb_band = 100;                                  % kHz, baseband used for SNR
+maintone    = round(sig_freq/fres);
+signal_bins = maintone-7:maintone+7;
+inband_bins = 1:round(fb_band/fres);
+noise_bins  = setdiff(inband_bins, signal_bins);
+
+ffy_lin = abs(fft(y' .* kaiser(length(y),20)));
+sp = sum(ffy_lin(signal_bins).^2);
+np = sum(ffy_lin(noise_bins).^2);
+SNR_asym = 10*log10(sp/np);
+fprintf('\n[CT MOD2 with asymmetric DAC]  SNR over %g kHz = %.2f dB\n', ...
+        fb_band, SNR_asym);
+fprintf('Note: re-run with the IDEAL DAC_wave block uncommented for the\n');
+fprintf('ideal-DAC reference value; the difference is the resolution loss\n');
+fprintf('caused by DAC ISI (intersymbol interference).\n');

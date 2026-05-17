@@ -53,6 +53,7 @@ subplot(3,1,2); plot(w2,'k','LineWidth',1.5);
 xlabel('Samples'); ylabel('W2 (2nd Integrator)'); grid on;
 subplot(3,1,3); plot(y,'k','LineWidth',1.5);
 xlabel('Samples'); ylabel('Y (Bitstream)'); grid;
+saveas(gcf,'results/MOD2_CT_FB_time.png');
 
 %************************************************************************
 % Display the 'frequency domain' output values
@@ -61,6 +62,7 @@ ffty = abs(fft(y'.*(kaiser(length(y),20))));
 ffty = 20*log10(ffty/(amplitude*N/2));        % Scale the spectrum (simply)
   
 figure(2);
-semilogx((1:N/2)*fres,ffty(1:N/2),'-r','LineWidth',1);   
+semilogx((1:N/2)*fres,ffty(1:N/2),'-r','LineWidth',1);
 grid on; xlabel('Frequency'); ylabel('Amplitude [dB]');
-title('Output spectrum of the 2nd order feed forward sigma delta modulator');
+title('Output spectrum of the 2nd order CT feed-back sigma delta modulator');
+saveas(gcf,'results/MOD2_CT_FB_spectrum.png');

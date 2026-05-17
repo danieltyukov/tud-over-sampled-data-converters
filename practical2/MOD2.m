@@ -52,6 +52,7 @@ xlabel('Samples'); ylabel('w2 (2nd Accumulator)');grid;
 subplot(3,1,3);plot(y,'k','LineWidth',1.5);
 xlabel('Samples'); ylabel('y (Bitstream)');grid;
 sgtitle(sprintf('Baseline run: x = %g, a = %g, N = %d', offset, a, nr_points));
+saveas(gcf, sprintf('results/MOD2_baseline_x%.4f_a%.2f.png', offset, a));
 
 %%% [MOD] === Part (b): DC offsets 50 mV and 34.6 mV, sinc1 vs sinc2 ======
 %%% [MOD] sinc1 = rectangular window, sinc2 = triangular window.
@@ -81,6 +82,7 @@ for k = 1:length(off_list)
     xlabel('Samples');ylabel('w2');grid;
     subplot(3,1,3);plot(yk,'k','LineWidth',1.2);
     xlabel('Samples');ylabel('y');grid;
+    saveas(gcf, sprintf('results/MOD2_offset_x%.4f.png', off_k));
 end
 
 %%% [MOD] === Part (c): nr_points 100 vs 1000, Q-error scaling ============
@@ -132,6 +134,7 @@ for k = 1:length(a_list)
         xlabel('Samples');ylabel('w2');grid;
         subplot(3,1,3);plot(ya,'k','LineWidth',1.0);
         xlabel('Samples');ylabel('y');grid;
+        saveas(gcf, sprintf('results/MOD2_asweep_a%.2f.png', ak));
     end
 end
 

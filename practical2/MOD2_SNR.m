@@ -58,6 +58,7 @@ ffty_dB = 20*log10(ffty_magn/max(ffty_magn)); % Scale the spectrum
 figure(1); semilogx((1:nr_points/2)*fres,ffty_dB(1:nr_points/2),'-k','LineWidth',1.5);
 xlabel('Frequency'); ylabel('Amplitude [dB]'); grid on;
 title('Output spectrum of the 2nd order sigma delta modulator');
+saveas(gcf,'results/MOD2_SNR_spectrum.png');
 
 figure(2); semilogx((1:nr_points/2)*fres,ffty_dB(1:nr_points/2));
 hold on;
@@ -66,6 +67,7 @@ plot(signal_bins*fres,ffty_dB(signal_bins),'r','LineWidth',3);
 hold off;
 legend('Full spectrum','Inband Bins','Main tone','Location','southeast');
 xlabel('frequency'); ylabel('Amplitude'); grid on;
+saveas(gcf,'results/MOD2_SNR_bands.png');
 
 %%% [MOD] === Part (a): SNR vs stabilizing coefficient (delay-free) ========
 %%% [MOD] As a moves away from 1, the NTF zeros leave z = 1 so the in-band
@@ -81,6 +83,7 @@ figure(3);
 semilogx(a_list_df, SNR_df, 'b-o', 'LineWidth', 1.2);
 grid on; xlabel('a [-]'); ylabel('SNR [dB]');
 title('SNR vs stabilizing coefficient -- delay-free 1st acc.');
+saveas(gcf,'results/MOD2_SNR_vs_a_delayfree.png');
 
 %%% [MOD] Spectrum overlay at a few representative values
 a_show = [1.0, 0.5, 0.1];
@@ -97,6 +100,7 @@ end
 hold off; grid on; legend('show');
 xlabel('Frequency'); ylabel('Amplitude [dB]');
 title('Output spectrum vs a (delay-free 1st acc.)');
+saveas(gcf,'results/MOD2_SNR_spectrum_vs_a.png');
 
 %%% [MOD] === Part (b): Delayed 1st accumulator ============================
 %%% [MOD] w1 update becomes: w1(i) = w1(i-1) + in(i-1) - y(i-1)
@@ -117,6 +121,7 @@ semilogx(a_list_df, SNR_df, 'b-o', a_list_d, SNR_d, 'r-s', 'LineWidth', 1.2);
 grid on; xlabel('a [-]'); ylabel('SNR [dB]');
 legend('delay-free','delayed', 'Location','south');
 title('SNR vs a -- delay-free vs delayed 1st accumulator');
+saveas(gcf,'results/MOD2_SNR_delayed_vs_delayfree.png');
 
 %%% [MOD] Spectrum comparison: delay-free a = 1 vs delayed a* = 2
 y_df = mod2_run(in, 1.0, 'delayfree');
@@ -133,6 +138,7 @@ semilogx((1:nr_points/2)*fres, fdf_dB(1:nr_points/2), 'b', ...
 grid on; xlabel('Frequency'); ylabel('Amplitude [dB]');
 legend('delay-free a = 1','delayed a* = 2','Location','southeast');
 title('Spectrum: delay-free a=1 vs delayed a*=2');
+saveas(gcf,'results/MOD2_SNR_spectrum_a1_vs_a2.png');
 
 SNR_df_at1 = mod2_snr(in, 1.0, 'delayfree', signal_bins, inband_bins, noise_bins);
 SNR_d_at2  = mod2_snr(in, 2.0, 'delayed',   signal_bins, inband_bins, noise_bins);
