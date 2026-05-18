@@ -9,7 +9,7 @@
 %   - Input amplitude that gives peak SQNR: A = 0.70 V
 %     (amp sweep 0.1..1 at fs = 10 MHz, peak SQNR = 100.3 dB).
 %   - Minimum OSR for SQNR = 100 dB: OSR = 250 (fs = 10 MHz, fb = 20 kHz).
-%   - Thermal noise at the 1st integrator for SNR = 90 dB: ~65 uVrms.
+%   - Thermal noise at the 1st integrator for SNR = 90 dB: ~230 uVrms.
 %   - Scaled coefficients (target |w1|,|w2| < 0.5 V):
 %       b1 ~ 0.26, b2 ~ 0.29, c1 = 2*b2 ~ 0.59 (c2 stays 1).
 %     Scaling rule: b1 = 0.48/max|w1|, b2 = 0.48/(b1*max|w2|), c1 = c*b2.
@@ -19,7 +19,7 @@
 %   - Input amplitude that gives peak SQNR: A = 0.65 V (peak SQNR = 100.4 dB).
 %   - Minimum OSR for SQNR = 100 dB: OSR = 250 (fs = 10 MHz). Same as A
 %     because both topologies share the same NTF magnitude.
-%   - Thermal noise at the 1st integrator for SNR = 90 dB: ~35-40 uVrms.
+%   - Thermal noise at the 1st integrator for SNR = 90 dB: ~220 uVrms.
 %     (Smaller noise budget than A because w1 follows the input, so b1
 %     scales down much more; input-referred noise = noise_rms/b1 is larger.)
 %   - Scaled coefficients: b1 ~ 0.15, b2 ~ 0.54, a2 = 2*b1 ~ 0.31 (a1 stays 1).
@@ -33,7 +33,7 @@
 %   - Minimum OSR for SQNR = 100 dB: OSR = 227.5 (fs = 9.1 MHz).
 %     ~9% lower than parts A/B - the notch puts NTF zeros off DC and
 %     gives ~3 dB extra in-band SNR.
-%   - Thermal noise at the 1st integrator for SNR = 90 dB: ~35 uVrms.
+%   - Thermal noise at the 1st integrator for SNR = 90 dB: ~210 uVrms.
 %   - Scaled coefficients: b1 ~ 0.15, b2 ~ 0.54, a2 = 2*b1 ~ 0.31,
 %     d_scaled ~ 3.8e-4. Scaling rule: a2 = a*b1, d_scaled = d/(b1*b2).
 %
@@ -43,8 +43,8 @@
 %     sees only the high-pass shaped quantisation noise, so |w1| is small.
 %     In FB, w1 follows the low-pass input, so |w1| is large. After scaling
 %     to keep swings < 0.5 V, b1_FF is much larger than b1_FB, which is why
-%     FB tolerates much less thermal noise at the integrator output for the
-%     same input-referred SNR (here 40 uV vs 65 uV).
+%     FB tolerates less thermal noise at the integrator output for the
+%     same input-referred SNR (here 220 uV vs 230 uV).
 %   - Local feedback (C) adds a d-coefficient feeding w2 back into the input
 %     of the first integrator. This moves NTF zeros off DC to the unit
 %     circle at +-f_notch. With Schreier's optimum f_notch = fb/sqrt(3),
@@ -199,7 +199,7 @@ for noise_rms_1 = 5e-6:5e-6:500e-6
     % Main modulator Loop
     for a = 2:nr_points+1
         w2(a)  = w2(a-1) + b2*w1(a-1);
-        w1(a)  = w1(a-1)  + b1*(in(a-1) - y(a-1)) + noise_rms_1*randn;
+        w1(a)  = w1(a-1)  + b1*(in(a-1) - y(a-1) + noise_rms_1*randn);
         w12(a) = c1*w1(a) + c2*w2(a);
         y(a)   = 2*(w12(a)>=0)-1;
     end
@@ -217,7 +217,7 @@ for noise_rms_1 = 5e-6:5e-6:500e-6
     % Main modulator Loop
     for a = 2:nr_points+1    
         w2(a)  = w2(a-1) + b2*w1(a-1);
-        w1(a)  = w1(a-1)  + b1*(in(a-1) - y(a-1)) + noise_rms_1*randn;
+        w1(a)  = w1(a-1)  + b1*(in(a-1) - y(a-1) + noise_rms_1*randn);
         w12(a) = c1*w1(a) + c2*w2(a);
         y(a)   = 2*(w12(a)>=0)-1;
     end
@@ -410,7 +410,7 @@ for noise_rms_1 = 5e-6:5e-6:500e-6
     for a = 2:nr_points+1
         w2(a) = w2(a-1) + b2*(w1(a-1)-a2*y(a-1));
         y(a) = 2*(w2(a)>=0)-1;
-        w1(a) = w1(a-1) + b1*(in(a-1)-a1*y(a-1)) + noise_rms_1*randn;
+        w1(a) = w1(a-1) + b1*(in(a-1)-a1*y(a-1) + noise_rms_1*randn);
     end
 
     % Scale FB modulator: a* = a*b1 keeps NTF shape (1-bit Q),
@@ -427,7 +427,7 @@ for noise_rms_1 = 5e-6:5e-6:500e-6
     for a = 2:nr_points+1
         w2(a) = w2(a-1) + b2*(w1(a-1)-a2*y(a-1));
         y(a) = 2*(w2(a)>=0)-1;
-        w1(a) = w1(a-1) + b1*(in(a-1)-a1*y(a-1)) + noise_rms_1*randn;
+        w1(a) = w1(a-1) + b1*(in(a-1)-a1*y(a-1) + noise_rms_1*randn);
     end
     
     ffty = abs(fft(y(2:nr_points+1)'.*(kaiser(length(y)-1,20)))); % compute magnitude spectrum
@@ -636,7 +636,7 @@ for noise_rms_1 = 5e-6:5e-6:500e-6
     for a = 2:nr_points+1
         w2(a) = w2(a-1) + b2*(w1(a-1)-a2*y(a-1));
         y(a) = 2*(w2(a)>=0)-1;
-        w1(a) = w1(a-1) + b1*(in(a-1)-a1*y(a-1)-d*w2(a-1)) + noise_rms_1*randn;
+        w1(a) = w1(a-1) + b1*(in(a-1)-a1*y(a-1)-d*w2(a-1) + noise_rms_1*randn);
     end
 
     % Scale resonator FB modulator: a* = a*b1, d* = d/(b1*b2)
@@ -653,7 +653,7 @@ for noise_rms_1 = 5e-6:5e-6:500e-6
     for a = 2:nr_points+1
         w2(a) = w2(a-1) + b2*(w1(a-1)-a2*y(a-1));
         y(a) = 2*(w2(a)>=0)-1;
-        w1(a) = w1(a-1) + b1*(in(a-1)-a1*y(a-1)-d*w2(a-1)) + noise_rms_1*randn;
+        w1(a) = w1(a-1) + b1*(in(a-1)-a1*y(a-1)-d*w2(a-1) + noise_rms_1*randn);
     end
 
     ffty = abs(fft(y(2:nr_points+1)'.*(kaiser(length(y)-1,20))));
