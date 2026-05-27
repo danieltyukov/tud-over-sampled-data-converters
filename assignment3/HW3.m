@@ -11,10 +11,12 @@
 %   - Minimum OSR for SQNR = 100 dB: OSR = 97 (fs = 2*fb*OSR = 3.88 MHz, fb = 20 kHz),
 %     SQNR = 100.3 dB at the MSA.
 %   - Non-ideal DAC (rise-time = 20% of a clock, ideal fall): SQNR drops from 100 dB
-%     to about 21 dB. The rise is slow and the fall is instant, so an element loses
-%     charge every time it goes high. The DAC is randomized each clock (DEM), so most
-%     elements toggle every period and that charge error turns into in-band noise.
-%     Setting the rise-time back to 0 gives 100.3 dB again, so the rise-time is the cause.
+%     to about 21 dB. The slow rise with an instant fall only hurts the rising edge,
+%     so the error is asymmetric. In the FFT this shows up as a DC offset (mean of y
+%     jumps from about -65 to -26 dBFS) and a 2nd harmonic that climbs to about -30 dBc,
+%     which is the even-order signature you expect from a one-sided error. The DC term
+%     is most of the in-band noise, so it is what drags the SQNR down. Setting the
+%     rise-time back to 0 gives 100.3 dB again, so the rise-time is the cause.
 %   - Input-referred thermal noise for SNR = 90 dB (SQNR kept at 100 dB): about
 %     827 uVrms at the first integrator input.
 %   - Scaling so both swings stay < 0.5 V: b1 = 0.68, b2 = 0.56, c1 = 1.12, and Vref
@@ -307,17 +309,26 @@ ffty_magn = abs(ffty);
 ffty_magn = ffty_magn/(amplitude*N/2);
 ffty_dB   = 20*log10(ffty_magn);
 
+% Asymmetric DAC error: look for a DC offset and harmonic tones in the FFT
+dc_offset = mean(y(2:N+1));
+h2 = 2*(maintone-1) + 1;   % 2nd harmonic bin
+h3 = 3*(maintone-1) + 1;   % 3rd harmonic bin
+h2_dBc = 10*log10(sum(abs(ffty(h2-3:h2+3)).^2)/signal_power);
+h3_dBc = 10*log10(sum(abs(ffty(h3-3:h3+3)).^2)/signal_power);
+
 figure(4);
 semilogx((1:round(N/2))*fres*1e3, ffty_dB(1:round(N/2)));
 hold on;
 semilogx(inband_bins*fres*1e3, ffty_dB(inband_bins), 'g', 'LineWidth', 3);
 semilogx(signal_bins*fres*1e3, ffty_dB(signal_bins), 'r', 'LineWidth', 3);
+semilogx([h2 h3]*fres*1e3, ffty_dB([h2 h3]), 'm*', 'MarkerSize', 10, 'LineWidth', 2);
 hold off;
-legend('fs/2', 'Inband Bins', 'Main tone');
+legend('fs/2', 'Inband Bins', 'Main tone', '2nd/3rd harmonic');
 xlabel('Frequency (Hz)'); ylabel('Amplitude (dB)'); grid on;
 title('2nd-order modulator with 3-bit quantizer and non-ideal thermometer DAC output spectrum');
 
-fprintf('New SQNR = %.2f dB\n', SNR);
+fprintf('New SQNR = %.2f dB (DC offset = %+.4f, 2nd harm = %.1f dBc, 3rd harm = %.1f dBc)\n', ...
+        SNR, dc_offset, h2_dBc, h3_dBc);
 
 % Add the calculated noise for 90 dB SNR
 noise_rms=amplitude*sqrt(fs*nr_steps/4/fb/10^(90/10));
