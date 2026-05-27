@@ -4,9 +4,37 @@
 %   Daniel Tyukov,    5714699
 %
 % Answers (each block is a self-contained %% section - run with Ctrl+Enter):
+%
+% Question A - 3-bit CT feed-forward modulator (mid-rise quantizer, thermometer DAC)
+%   - Max signal amplitude (peak SQNR): A = 0.84 (Vref = 1), found by sweeping the
+%     input amplitude. This MSA is used for the rest of A.
+%   - Minimum OSR for SQNR = 100 dB: OSR = 97 (fs = 2*fb*OSR = 3.88 MHz, fb = 20 kHz),
+%     SQNR = 100.3 dB at the MSA.
+%   - Non-ideal DAC (rise-time = 20% of a clock, ideal fall): SQNR drops from 100 dB
+%     to about 21 dB. The rise is slow and the fall is instant, so an element loses
+%     charge every time it goes high. The DAC is randomized each clock (DEM), so most
+%     elements toggle every period and that charge error turns into in-band noise.
+%     Setting the rise-time back to 0 gives 100.3 dB again, so the rise-time is the cause.
+%   - Input-referred thermal noise for SNR = 90 dB (SQNR kept at 100 dB): about
+%     827 uVrms at the first integrator input.
+%   - Scaling so both swings stay < 0.5 V: b1 = 0.68, b2 = 0.56, c1 = 1.12, and Vref
+%     is scaled by k2 as well so the quantizer sees the same ratio. Result is
+%     max|w1| = 0.46 V, max|w2| = 0.44 V.
+%
+% Question B - same modulator with a 1-bit quantizer
+%   - Minimum OSR for SQNR = 100 dB: OSR = 240, against OSR = 97 for the 3-bit. So the
+%     1-bit needs about 2.5x the OSR for the same SQNR.
+%   - Why: the 3-bit has 2 more bits, so roughly 12 dB less quantization noise, plus a
+%     higher stable input (0.84 vs 0.7). The NTF is the same 2nd order, so the in-band
+%     difference is just the quantizer noise floor.
+%   - DAC side: the 1-bit DAC has only two levels, so it is linear by construction with
+%     no DEM and no element mismatch. The 3-bit pays for its resolution with that DAC
+%     complexity and the rise-time sensitivity seen in A.
+%   - 1-bit numbers for reference: non-ideal DAC SQNR about 16 dB, thermal noise for
+%     90 dB SNR about 1084 uVrms, scaled b1 = 0.30, b2 = 0.35, c1 = 0.71
+%     (max|w1| = 0.45 V, max|w2| = 0.47 V).
 
-
-%% Quetion A
+%% Question A
 clear all; close all; clc;
 
 SNR_vals = []; amp_vals = 0.1:0.02:1;  % amplitudes to sweep
@@ -159,8 +187,8 @@ for OSR = 90:1:110
         % y(a) = 2*(v(ix) >= 0) - 1;
     end
     
-    k1 = 0.49 / max(abs(w1));   % target 0.49 V leaves margin for run-to-run randn variation
-    k2 = 0.49 / max(abs(w2));
+    k1 = 0.45 / max(abs(w1));   % target 0.45 V leaves margin so the noisy run stays under 0.5 V
+    k2 = 0.45 / max(abs(w2));
     
     Vref = Vref*k2;
     b1 = b1 * k1;
@@ -250,8 +278,8 @@ y   = zeros(1, N); y(1) = 0;
 
 ix      = 1;
 
-prev_elements = -zeros(1, nr_levels-1);   % all elements start at -1
-dac_waveform  = -zeros(1, nr_steps);      % consistent initial DAC output
+prev_elements = -ones(1, nr_levels-1);   % all elements start at -1
+dac_waveform  = -ones(1, nr_steps);      % consistent initial DAC output
 
 for a = 2:N+1
     for b = 1:nr_steps
@@ -352,8 +380,8 @@ xlabel('Frequency (Hz)'); ylabel('Amplitude (dB)'); grid on;
 title('2nd-order modulator with 3-bit quantizer and thermometer DAC output spectrum and thermal noise');
 
 
-%% Quetion B
-% clear all; close all; clc;
+%% Question B - same modulator as A but with a 1-bit quantizer
+clear all; close all; clc;
 
 for OSR = 230:10:250
 % Define input sinewave and sampling conditions
@@ -385,14 +413,14 @@ ix      = 1;
 
 
 % CT integrator step coefficients (unity gain per clock period)
-% Adjust coefficients to account for simulation step-size
-om1 = 2*pi/(nr_steps); 
-om2 = 2*pi/(nr_steps); 
+% Same loop filter as Question A so only the quantizer differs
+om1 = 1/(nr_steps);
+om2 = 1/(nr_steps);
 b1 = 1;
 b2 = 1;
 
-c1 = 4*pi*b2;
-c2 = 1;    
+c1 = 2*b2;
+c2 = 1;
 
 %**********************************************************************
 % 2nd-order CIFF CT SDM main loop
@@ -407,8 +435,8 @@ for a = 2:N
     y(a) = 2*(v(ix) >= 0) - 1;
 end
 
-k1 = 0.49 / max(abs(w1));   % target 0.49 V leaves margin for run-to-run randn variation
-k2 = 0.49 / max(abs(w2));
+k1 = 0.45 / max(abs(w1));   % target 0.45 V leaves margin so the noisy run stays under 0.5 V
+k2 = 0.45 / max(abs(w2));
 
 % Vref = Vref*k2;
 b1 = b1 * k1;
@@ -617,8 +645,8 @@ function [q_out, index] = mbq(in, nr_levels, vref)
 % "index" = [0 .. nr_levels-1] is the number of DAC elements with the value of +1
 % All other DAC elements should have a value of -1
 
-delta = 2/(nr_levels-1);                      % calculate normalized spacing between quantizer levels         
-q_out = quant(in/vref + 1,delta) - 1;         % shift normalized input range, use quant, then shift back
+delta = 2/(nr_levels-1);                      % calculate normalized spacing between quantizer levels
+q_out = round((in/vref + 1)/delta)*delta - 1; % shift normalized input range, round to nearest level, then shift back
 q_out = sign(in)*min(abs(q_out),1);           % clip quantized input value
 index = round((q_out+1)/delta); % Assign a thermometer code index to the decided quantizer level
 end
