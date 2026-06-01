@@ -1,89 +1,152 @@
-% 8-level (3-bit) quantizer, normalized modulator with no scaling,
-% more than 90dB of SNR and a (randomized) thermometer DAC
+% Exercise 3.1 / 3.2 - 3-bit (8-level) 2nd order modulator with a thermometer DAC.
+% Same modulator run with 4 different element-selection strategies so we can
+% see what DAC mismatch does and how DEM (randomization) and DWA fix it:
+%   1) matched elements          -> ideal reference (no mismatch)
+%   2) mismatch + plain thermoDAC -> static selection, mismatch -> tones (no DEM)
+%   3) mismatch + thermoDACrnd    -> randomization (DEM), tones become white noise
+%   4) mismatch + DWA             -> sequential selection, mismatch is 1st order shaped
 
-clear all; close all; clc; % clear everything
+clear all; close all; clc;
 
 % Define input sinewave
-fin        = 1.003;   % input frequency (kHz) (has no simple integer relationship with fs)
+fin        = 1.003;   % input frequency (kHz) (no simple integer relationship with fs)
 amplitude  = 0.7;     % input amplitude (Volts)
 offset     = 0.0;     % input offset (Volts)
 fb         = 20;      % signal bandwidth (kHz)
-fres       = 0.02;    % define FFT resolution (kHz)
-OSR        = 60;  
+fres       = 0.02;    % FFT resolution (kHz)
+OSR        = 60;
 fs         = 2*fb*OSR;        % sampling frequency (kHz)
 N          = round(fs/fres);
-nr_periods = round(fin/fres); % simulate a whole number of periods => input falls into an FFT bin
+nr_periods = round(fin/fres); % whole number of periods => input lands in an FFT bin
 
 % Quantizer definitions
-nr_levels = 8;    % number of levels 
+nr_levels = 8;    % number of levels
 Vref      = 1.0;  % reference voltage
+nr_elem   = nr_levels - 1;
 
-% Thermometer DAC elements 
-elements = ones(1,nr_levels-1)
+% Element mismatch. Same mismatched DAC is reused for cases 2-4 so the
+% comparison is fair (one physical DAC, three selection schemes).
+mismatch = 0.01;          % 1% std unit-element mismatch
+rng(1);                   % fix seed so the run is reproducible
+elem_ideal = ones(1,nr_elem);
+elem_mis   = 1 + mismatch*randn(1,nr_elem);
 
 %**********************************************************************
-% Locate the bins related to the main tone, as well as the inband bins
+% Locate the bins related to the main tone, the inband bins, harmonics
 %**********************************************************************
 maintone    = nr_periods + 1;                   % pointer to main tone
-signal_bins = [maintone-7 : maintone+7];        % width of Kaiser(20) window's main lobe
-inband_bins = [1:fb/fres];                      % pointer to inband bins
-noise_bins  = setdiff(inband_bins,signal_bins); % pointer to noise bins
+signal_bins = [maintone-7 : maintone+7];        % Kaiser(20) main lobe width
+inband_bins = [1:fb/fres];                       % pointer to inband bins
+noise_bins  = setdiff(inband_bins,signal_bins);  % everything inband except the tone
 
-% Coefficients and Scaling
-a2 = 2;
-b1 = 1; b2 =1;           % no scaling
-     
+% harmonic bins (HD2..HD5) so we can separate distortion from the noise floor
+harm_bins = [];
+for k = 2:5
+    hb = k*nr_periods + 1;
+    harm_bins = [harm_bins, hb-3:hb+3];
+end
+harm_bins = intersect(harm_bins, inband_bins);
+noiseonly_bins = setdiff(noise_bins, harm_bins);  % inband minus tone minus harmonics
+
+% Coefficients (no scaling, 2nd order feedback modulator)
+a2 = 2; b1 = 1; b2 = 1;
+
 in = offset + amplitude*sin(2*pi*fin*(1:N)/fs);
-    
-% Pre-allocate and initialize array variables => faster code
-y  = zeros(1,N); y(1) = 1;
-DAC = zeros(1,N);
-w1 = y;  w1(1) = 0;
-w2 = y;  w2(1) = 0.1;
 
-% The main loop simulating the second order loop
-for a = 2:N
-     w2(a) = w2(a-1) + b2*(w1(a-1) - a2*y(a-1));
-     w1(a) = w1(a-1) + b1*(in(a-1) - DAC(a-1));
-     [y(a), index] = mbq(w2(a), nr_levels, Vref);
-     DAC(a) = thermoDAC(index, elements, nr_levels); % standard DAC
-     %DAC(a) = thermoDACrnd(index, elements, nr_levels); % randomized DAC    
+cases = {'matched','mismatch + thermoDAC (no DEM)','mismatch + DEM (random)','mismatch + DWA'};
+ffty_dB = zeros(N, numel(cases));
+SNDR = zeros(1,numel(cases));   % signal vs (noise + distortion)
+SNR  = zeros(1,numel(cases));   % signal vs noise only (harmonics removed)
+
+for c = 1:numel(cases)
+    % pick the element vector for this run
+    if c == 1, elements = elem_ideal; else, elements = elem_mis; end
+    rng(7);  % reset randomizer so case 3 is repeatable
+
+    % Pre-allocate and initialize array variables => faster code
+    y  = zeros(1,N); y(1) = 1;
+    DAC = zeros(1,N);
+    w1 = y;  w1(1) = 0;
+    w2 = y;  w2(1) = 0.1;
+    ptr = 0;                 % DWA pointer (only used in case 4)
+
+    for a = 2:N
+        w2(a) = w2(a-1) + b2*(w1(a-1) - a2*y(a-1));
+        w1(a) = w1(a-1) + b1*(in(a-1) - DAC(a-1));
+        [y(a), index] = mbq(w2(a), nr_levels, Vref);
+
+        switch c
+            case {1,2}
+                DAC(a) = thermoDAC(index, elements, nr_levels);    % static thermometer
+            case 3
+                DAC(a) = thermoDACrnd(index, elements, nr_levels); % DEM: random subset
+            case 4
+                % DWA: take 'index' consecutive elements starting at ptr, wrap around.
+                % Keeping the pointer between cycles is what shapes the mismatch.
+                DACvect = -ones(1,nr_elem);
+                if index > 0
+                    sel = mod((ptr:ptr+index-1), nr_elem) + 1;
+                    DACvect(sel) = 1;
+                end
+                DAC(a) = (elements*DACvect')/nr_elem;
+                ptr = mod(ptr + index, nr_elem);
+        end
+    end
+
+    % FFT of the quantizer output, signal / noise / distortion powers
+    ffty = fft(y'.*(kaiser(length(y),20)));
+    power = ffty.*conj(ffty);
+    signal_power = sum(power(signal_bins));
+    nd_power     = sum(power(noise_bins));      % noise + distortion (slide calls this SNR)
+    n_power      = sum(power(noiseonly_bins));  % noise floor only
+
+    SNDR(c) = 10*log10(signal_power/nd_power);
+    SNR(c)  = 10*log10(signal_power/n_power);
+
+    ffty_magn = abs(ffty)/(amplitude*N/2);
+    ffty_dB(:,c) = 20*log10(ffty_magn);
+
+    fprintf('%-32s  SNDR = %5.1f dB   SNR(noise only) = %5.1f dB\n', cases{c}, SNDR(c), SNR(c));
 end
 
 %**********************************************************************
-% Calculate bitstream FFT, signal and noise powers, and SNR
+% Plots
 %**********************************************************************
-ffty = (fft(y'.*(kaiser(length(y),20)))); % window output and compute FFT 
-    
-% To increase speed determine ONLY the power in the INBAND bins
-inband_power = ffty(inband_bins).*conj(ffty(inband_bins));  
-signal_power = sum(inband_power(signal_bins)); % sum signal power
-noise_power  = sum(inband_power(noise_bins));  % sum noise power
-    
-SNR  = 10*log10(signal_power/noise_power); % calculate SNR in dB
-    
-OSR    % display resulting OSR         
-SNR    % display resulting SNR 
+f = (1:round(N/2))*fres;
 
-ffty_magn = abs(ffty);
-ffty_magn = ffty_magn/(amplitude*N/2);    % Scale the spectrum (VERY SIMPLY)
-ffty_dB   = 20*log10(ffty_magn);
+% Figure 1: no-DEM vs DEM vs DWA spectra overlaid
+figure('Position',[100 100 1000 650]);
+semilogx(f, ffty_dB(1:round(N/2),2), 'Color',[0.85 0.3 0.1]); hold on;
+semilogx(f, ffty_dB(1:round(N/2),3), 'Color',[0.1 0.5 0.9]);
+semilogx(f, ffty_dB(1:round(N/2),4), 'Color',[0.1 0.7 0.2]);
+xline(fb,'k--');
+hold off; grid on; xlim([0.1 fs/2]); ylim([-180 10]);
+xlabel('Frequency [kHz]'); ylabel('Spectrum [dB]');
+legend('no DEM (static)','DEM (random)','DWA','signal band edge','Location','northwest');
+title(sprintf('3-bit MOD2, %.0f%% mismatch: static vs DEM vs DWA', mismatch*100));
+print(gcf, fullfile('results','MOD2_3Bit_DEM_DWA_spectrum.png'), '-dpng','-r110');
 
-%Plot the spectrum
-figure(1); 
-semilogx((1:round(N/2))*fres,ffty_dB(1:round(N/2))); 
-hold on; 
-semilogx(inband_bins*fres,ffty_dB(inband_bins),'g','LineWidth',3);
-semilogx(signal_bins*fres,ffty_dB(signal_bins),'r','LineWidth',3);
-hold off;
+% Figure 2: zoom into the signal band to show the harmonic tones
+figure('Position',[100 100 1000 650]);
+semilogx(f, ffty_dB(1:round(N/2),2), 'Color',[0.85 0.3 0.1],'LineWidth',1.2); hold on;
+semilogx(f, ffty_dB(1:round(N/2),3), 'Color',[0.1 0.5 0.9]);
+semilogx(f, ffty_dB(1:round(N/2),4), 'Color',[0.1 0.7 0.2]);
+for k = 2:4
+    semilogx(k*fin*[1 1], [-180 0],'k:');
+    text(k*fin, -8, sprintf('HD%d',k));
+end
+hold off; grid on; xlim([0.3 fb]); ylim([-160 10]);
+xlabel('Frequency [kHz]'); ylabel('Spectrum [dB]');
+legend('no DEM (static)','DEM (random)','DWA','Location','southeast');
+title('In-band zoom: static DAC shows harmonic tones, DEM/DWA do not');
+print(gcf, fullfile('results','MOD2_3Bit_DEM_DWA_inband.png'), '-dpng','-r110');
 
-legend('fs/2','Inband Bins','Main tone');
-xlabel('frequency'); ylabel('Amplitude'); grid on;
-
-figure(2)
-subplot(3,1,1);
-plot(w1); xlabel('Samples'); ylabel('W1 (1st Accumulator)'); grid on;
-subplot(3,1,2);
-plot(w2); xlabel('Samples'); ylabel('W2 (2nd Accumulator)'); grid on;
-subplot(3,1,3);
-plot(y);  xlabel('Samples'); ylabel('Y (Quantizer Output)'); grid on;
+% Figure 3: matched reference vs mismatched static, full picture
+figure('Position',[100 100 1000 650]);
+semilogx(f, ffty_dB(1:round(N/2),1), 'Color',[0.4 0.4 0.4]); hold on;
+semilogx(f, ffty_dB(1:round(N/2),2), 'Color',[0.85 0.3 0.1]);
+xline(fb,'k--'); hold off; grid on; xlim([0.1 fs/2]); ylim([-180 10]);
+xlabel('Frequency [kHz]'); ylabel('Spectrum [dB]');
+legend('matched elements','1% mismatch (static DAC)','signal band edge','Location','northwest');
+title('Effect of element mismatch with a static thermometer DAC');
+print(gcf, fullfile('results','MOD2_3Bit_matched_vs_mismatch.png'), '-dpng','-r110');
