@@ -81,14 +81,17 @@ for c = 1:numel(cases)
             case 3
                 DAC(a) = thermoDACrnd(index, elements, nr_levels); % DEM: random subset
             case 4
+                % data weighted averaging, sequential rotation
                 % DWA: take 'index' consecutive elements starting at ptr, wrap around.
                 % Keeping the pointer between cycles is what shapes the mismatch.
                 DACvect = -ones(1,nr_elem);
                 if index > 0
-                    sel = mod((ptr:ptr+index-1), nr_elem) + 1;
+                    sel = mod((ptr:ptr+index-1), nr_elem) + 1; % this does the wrap-around selection of 'index' elements starting at 'ptr'
                     DACvect(sel) = 1;
                 end
-                DAC(a) = (elements*DACvect')/nr_elem;
+                % DAC(a) = (elements*DACvect')/nr_elem; % linear average of the selected elements
+                DAC(a) = (2*sum(elements(sel)) - sum(elements)) / nr_elem; % this form uses the fact that the unselected elements are -1, so we can do 2*sum(selected) - sum(all) which means we only need to sum the selected elements instead of summing all and subtracting the unselected ones.
+                DAC(a)
                 ptr = mod(ptr + index, nr_elem);
         end
     end
