@@ -3,7 +3,7 @@ function p = firdsm_params()
 % every knob lives here so any value can be changed live during the oral and
 % the effect shown. non-ideality knobs default to off (= ideal modulator).
 
-% ---- design point (paper) ----
+%% design point (paper)
 p.fs    = 3.6e9;                 % sampling rate
 p.fb    = 36e6;                  % signal bandwidth (also run 25e6)
 p.OSR   = p.fs/(2*p.fb);         % ~50
@@ -12,25 +12,25 @@ p.OBG   = 1.5;                   % out-of-band gain (lee's rule, 1-bit)
 p.Ntap  = 8;                     % fir dac taps
 p.firtaps = [0.07 0.12 0.15 0.16 0.16 0.15 0.12 0.07];   % eq.(1), sum = 1
 
-% ---- coefficients (derived, see firdsm_coeffs) ----
+%% coefficients (derived, see firdsm_coeffs)
 c = firdsm_coeffs(p.OSR, p.OBG, [0.46 0.89]);
 p.a = c.a; p.g1 = c.g1; p.g2 = c.g2; p.b1 = c.b1;
 p.numz = c.numz; p.Dt = c.Dt; p.coeff = c;
-p.kff = 2.5;                     % input feed-forward to quantizer (stf peaking)
+p.kff = 1.2;                     % input feed-forward into last integrator (stf peaking)
 
-% ---- simulation grid ----
+%% simulation grid
 p.ns    = 20;                    % ct sub-steps per clock
 p.Nfft  = 2^16;                  % clock samples for spectra
 p.amp   = 0.5;                   % default input amplitude (full scale = 1)
 p.fin   = [];                    % set coherent in firdsm_run if empty (~10 mhz)
 p.seed  = 1;                     % rng seed
 
-% ---- technique switches (default = full proposed design) ----
+%% technique switches (default = full proposed design)
 p.fir_on   = 1;                  % 8-tap fir feedback dac
 p.comp_on  = 1;                  % analog fir-delay compensation path
 p.first_tap_zero = 0;            % set f1=0 (explicit 1-clock delay, metastability)
 
-% ---- non-ideality knobs (default off / ideal) ----
+%% non-ideality knobs (default off / ideal)
 p.jitter_rms  = 0;               % white clock jitter, rms as fraction of Ts
 p.jitter_fmod = 0;               % sinusoidal-fm jitter frequency (Hz), 0 = white
 p.A_dc = inf;                    % opamp dc gain (linear, not dB)

@@ -1,22 +1,18 @@
 function c = firdsm_coeffs(OSR, OBG, alpha)
-% 4th-order cifb coefficients for the fir-dac modulator (hand-rolled, no delsig).
-% 2 optimised in-band zeros via resonators, butterworth-hp poles bisected to obg,
-% then the cifb dac gains a from the loop char poly. returns struct c with
-% a, g1/g2, b1, numz/Dt (ntf num/den), Wc. method in 09_reference_notes.md sec B.
+% 4th-order cifb coefficients (hand-rolled, no delsig): two in-band resonator
+% zeros, butterworth-hp poles bisected to the obg, dac gains from the char poly.
 
 if nargin < 1, OSR = 50;  end
 if nargin < 2, OBG = 1.5; end
-if nargin < 3, alpha = [0.46 0.89]; end   % zero radii as fraction of band edge
+if nargin < 3, alpha = [0.46 0.89]; end
 
-fbn = 1/(2*OSR);                 % normalised band edge f/fs
-thz = 2*pi*alpha*fbn;            % zero angles (rad)
-g1 = 2*(1-cos(thz(1)));          % resonator -> zero pair 1
-g2 = 2*(1-cos(thz(2)));          % resonator -> zero pair 2
+fbn = 1/(2*OSR);
+thz = 2*pi*alpha*fbn;            % zero angles
+g1 = 2*(1-cos(thz(1)));          % resonators -> two optimised zeros
+g2 = 2*(1-cos(thz(2)));
+numz = [1, -4, g1+g2+6, -2*g1-2*g2-4, g1+g2+g1*g2+1];   % ntf numerator
 
-% cifb ntf numerator (from the symbolic loop derivation, two resonators)
-numz = [1, -4, g1+g2+6, -2*g1-2*g2-4, g1+g2+g1*g2+1];
-
-% target denominator: butterworth high-pass, bisect cutoff for the wanted obg
+% denominator: butterworth high-pass, bisect cutoff to hit the obg
 w = linspace(0,pi,8000); ejw = exp(1j*w);
 obg = @(D) max(abs(polyval(numz,ejw))./abs(polyval(D,ejw)));
 lo = 0.02; hi = 0.45;
@@ -27,9 +23,7 @@ for it = 1:60
 end
 [~,Dt] = butter(4, Wc, 'high'); Dt = Dt/Dt(1);
 
-% solve a(1..4) so the loop characteristic polynomial equals Dt.
-% A(a) is the closed-loop state matrix of the sequential-update cifb; its
-% char poly is affine in a, so build the jacobian and solve a 4x4 system.
+% char poly of the loop is affine in a, so solve a 4x4 system to match Dt
 Amat = @(a) [1,-g1,0,-a(1); 1,1-g1,0,-(a(1)+a(2)); ...
              1,1-g1,1,-(g2+a(1)+a(2)+a(3)); 1,1-g1,1,1-g2-sum(a)];
 cp = @(a) charpoly(Amat(a));

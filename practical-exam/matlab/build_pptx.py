@@ -22,7 +22,7 @@ import os
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
-from pptx.enum.text import MSO_ANCHOR
+from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.enum.shapes import PP_PLACEHOLDER
 
 # ---------------------------------------------------------------------------
@@ -142,6 +142,7 @@ def set_text(tf, lines, word_wrap=True):
         p = tf.paragraphs[0] if first else tf.add_paragraph()
         first = False
         p.level = level
+        p.alignment = PP_ALIGN.LEFT          # template boxes default to centre
         run = p.add_run()
         run.text = text
         run.font.size = Pt(size)
@@ -287,12 +288,12 @@ def build():
         for para in t.text_frame.paragraphs:
             for r in para.runs:
                 r.font.color.rgb = WHITE
-                r.font.size = Pt(28)
+                r.font.size = Pt(20)
     sub = shape_by_name(TITLE, "Subtitle 2")
     if sub is not None:
         set_text(sub.text_frame, [
-            ("Shettigar & Pavan, IEEE JSSC, vol. 47 no. 12, 2012", 0, False, 18),
-            ("Daniel Tyukov, 5714699 - ET4278", 0, True, 18),
+            ("Shettigar & Pavan, IEEE JSSC, vol. 47 no. 12, 2012", 0, False, 16),
+            ("Daniel Tyukov, 5714699 - ET4278", 0, True, 16),
         ])
         for para in sub.text_frame.paragraphs:
             for r in para.runs:
@@ -304,7 +305,7 @@ def build():
     # ---- slide 1: Q1 introduction ------------------------------------------
     set_title(Q1, "Q1. Introduction")
     body = get_body(Q1)
-    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(6.7), Inches(8.6)
+    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(5.6), Inches(8.6)
     set_text(body.text_frame, [
         H("Issues addressed by the paper"),
         B("Single-bit NRZ feedback: full-scale steps every cycle -> high clock-jitter sensitivity"),
@@ -321,8 +322,8 @@ def build():
         C("FIR feedback gives a 1-bit loop the jitter/linearity of a multi-bit loop; the price is "
           "loop delay, solved by an analog compensation path.", 13),
     ])
-    add_image_fit(Q1, paper_fig("fig01"), 7.3, 1.7, 6.6, 3.5, note_name="fig01")
-    add_image_fit(Q1, paper_fig("fig07"), 7.3, 5.5, 6.6, 4.0, note_name="fig07")
+    add_image_fit(Q1, paper_fig("fig01"), 6.0, 1.7, 7.8, 3.5, note_name="fig01")
+    add_image_fit(Q1, paper_fig("fig07"), 6.0, 5.3, 7.8, 4.2, note_name="fig07")
 
     # ---- slide 2: Q2 model & coefficients ----------------------------------
     set_title(Q2, "Q2. Model and coefficients")
@@ -334,7 +335,7 @@ def build():
         B("E(z) compensation FIR, 7 taps (derived): [0.93 0.81 0.66 0.50 0.34 0.19 0.07]"),
         B("CIFB feedback gains a = [0.0060 0.0457 0.1933 0.5547]"),
         B("Resonator gains g1 = 8.35e-4, g2 = 3.13e-3 (NTF zeros at 0.46, 0.89 of fb)"),
-        B("Input feed-forward kff = 2.5 (STF peaking); H1(s) bandpass, peak ~100 MHz"),
+        B("Input feed-forward kff = 1.2 into last integrator (STF peaking); H1(s) bandpass ~100 MHz"),
         B("fs = 3.6 GS/s, fb = 36 MHz, OSR = 50, order = 4, OBG = 1.5"),
         H("Derivation", 15),
         B("Synthesise 4th-order OBG-1.5 NTF (Butterworth-HP poles bisected for OBG) + 2 optimised zeros"),
@@ -409,8 +410,11 @@ def build():
         B("(bitstream, integrator states, recovered sine)"),
         C("decimation removes the out-of-band shaped noise; the in-band SNR is preserved.", 13),
     ])
-    add_image_fit(Q24, result_img("FIRDSM_decimation.png"), 7.1, 1.7, 6.8, 7.0,
+    body.width = Inches(5.6)
+    add_image_fit(Q24, result_img("FIRDSM_decimation.png"), 6.2, 1.6, 7.3, 3.9,
                   note_name="FIRDSM_decimation.png")
+    add_image_fit(Q24, result_img("FIRDSM_transient.png"), 6.2, 5.5, 7.3, 3.9,
+                  note_name="FIRDSM_transient.png")
 
     # ---- slide 7: Q2.5 list of simulation results --------------------------
     set_title(Q25, "Q2.5 List of simulation results")
@@ -448,11 +452,11 @@ def build():
         ("Q2.6A NTF",
          "Realised |NTF| vs f/Fs: 4th-order, OBG = 1.5, two optimised in-band notches.",
          "fig08", result_img("FIRDSM_design_NTF.png"), "FIRDSM_design_NTF.png",
-         "4th-order, OBG = 1.5, two in-band notches; matches Fig 8."),
+         "Same 4th-order high-pass shape as Fig 8: OBG = 1.5 plateau, two in-band notches (~-100 dB)."),
         ("Q2.6B STF",
          "|STF| magnitude from the input feed-forward.",
          "fig09", result_img("FIRDSM_design_STF.png"), "FIRDSM_design_STF.png",
-         "STF peaks ~+12 dB and needs an input pre-filter; matches Fig 9."),
+         "Same bandpass shape as Fig 9: ~+12 dB peak then rolls off (peak ~200 MHz vs ~100 MHz); needs input pre-filter."),
         ("Q2.6C Output PSD",
          "Output PSD, -4 dBFS 10 MHz tone, 2^16-pt FFT.",
          "fig22", result_img("FIRDSM_sim_PSD.png"), "FIRDSM_sim_PSD.png",
@@ -500,7 +504,7 @@ def build():
         # right box: your result (MATLAB png)
         rb = shape_by_name(slide, "Rectangle 5")
         if rb is not None:
-            set_text(rb.text_frame, [("Your result - MATLAB", 0, True, 12)])
+            set_text(rb.text_frame, [("My result - MATLAB", 0, True, 12)])
             rb.text_frame.vertical_anchor = MSO_ANCHOR.TOP
             L = Emu(rb.left).inches; T = Emu(rb.top).inches
             W = Emu(rb.width).inches; Hh = Emu(rb.height).inches
@@ -549,9 +553,9 @@ def build():
 
     q3(Q35, "Q3.5 Integrator non-linearity", [
         B("Paper: weak cubic on the input integrator I4: i = Gm*vd - G3*vd^3 (Gm/G3 = 1000, '20,20'; Fig 3).", 0, 12),
-        B("I4 (the input integrator) dominates because it processes the largest signal.", 0, 12),
-        B("Modelled as a per-sub-step cubic term; impact: out-of-band shaped noise demodulates in-band -> floor rises.", 0, 12),
-        C("FIR feedback relaxes the I4 linearity demand; the cubic raises the in-band floor like the 4-bit case.", 12),
+        B("The input integrator is the dominant one: its non-linearity acts on the unfiltered input/feedback.", 0, 12),
+        B("Modelled as a cubic on the I4 input; impact: it folds out-of-band shaped noise in-band -> floor rises.", 0, 12),
+        C("the input integrator sets the linearity budget; G3 raises the in-band floor (SNDR 94 -> 76 dB at G3=0.1).", 12),
     ], result_img("FIRDSM_nonlin_integrator.png"), "FIRDSM_nonlin_integrator.png")
 
     # ---- slides 22..26: Q4 circuit implementation --------------------------
@@ -673,9 +677,14 @@ def build():
         B("Updated architecture: keep the 8-tap FIR DAC, replace the post-facto correction with an in-loop ISI path."),
         B("Verified in MATLAB: ISI on/off + correction, reproducing Figs 29/30."),
     ])
-    add_image_fit(Q7, result_img("FIRDSM_isi_correction.png"), 0.45, 3.8, 6.7, 4.6,
+    add_textbox(Q7, 0.3, 3.7, 4.4, 0.3, [("PSD: HD2 down ~15 dB (Fig 30)", 0, True, 11)])
+    add_textbox(Q7, 4.85, 3.7, 4.4, 0.3, [("SNDR vs amplitude: kink removed (Fig 29)", 0, True, 11)])
+    add_textbox(Q7, 9.4, 3.7, 4.3, 0.3, [("paper Fig 30", 0, True, 11)])
+    add_image_fit(Q7, result_img("FIRDSM_isi_correction.png"), 0.3, 4.0, 4.4, 4.5,
                   note_name="FIRDSM_isi_correction.png")
-    add_image_fit(Q7, paper_fig("fig30"), 7.3, 3.8, 6.6, 4.6, note_name="fig30")
+    add_image_fit(Q7, result_img("FIRDSM_isi_sndr_vs_amp.png"), 4.85, 4.0, 4.4, 4.5,
+                  note_name="FIRDSM_isi_sndr_vs_amp.png")
+    add_image_fit(Q7, paper_fig("fig30"), 9.4, 4.0, 4.3, 4.5, note_name="fig30")
     add_textbox(Q7, 0.45, 8.7, 13.4, 0.9, [
         C("ISI correction recovers peak SNDR ~71 -> ~74 dB and drops HD2 ~15 dB (reproduces Figs 29/30).", 13)])
 
@@ -697,6 +706,30 @@ def build():
         C("single-bit + FIR feedback solved the 1-bit jitter/linearity problem and remains "
           "relevant; the compensation and ISI blocks are where modern designs improve on it.", 14),
     ])
+
+    # references slide (only the papers actually used), appended after the summary
+    REF = duplicate_slide(prs, 30)
+    set_title(REF, "References")
+    refs = [
+        "[1] P. Shettigar and S. Pavan, \"Design Techniques for Wideband Single-Bit CT Delta-Sigma Modulators With FIR Feedback DACs,\" IEEE JSSC, 47(12), 2012.",
+        "[2] J. A. Cherry and W. M. Snelgrove, \"Clock jitter and quantizer metastability in CT Delta-Sigma modulators,\" IEEE TCAS-II, 46(6), 1999.",
+        "[3] D. K. Su and B. A. Wooley, \"A CMOS oversampling D/A converter with a current-mode semidigital reconstruction filter,\" IEEE JSSC, 28(12), 1993.",
+        "[4] S. Pavan, \"Efficient Simulation of Weak Nonlinearities in CT Oversampling Converters,\" IEEE TCAS-I, 57(8), 2010.",
+        "[5] S. Pavan and P. Sankar, \"Power Reduction in CT Delta-Sigma Modulators Using the Assisted Opamp Technique,\" IEEE JSSC, 45(7), 2010.",
+        "[6] R. Adams and K. Q. Nguyen, \"A 113-dB SNR oversampling DAC with segmented noise-shaped scrambling,\" IEEE JSSC, 33(12), 1998.",
+        "[7] W. L. Lee, \"A novel higher order interpolative modulator topology for high resolution A/D converters,\" MS thesis, MIT, 1987.",
+        "[8] G. Mitteregger et al., \"A 20-mW 640-MHz CMOS CT Delta-Sigma ADC with 20-MHz BW, 80-dB DR,\" IEEE JSSC, 41(12), 2006.",
+        "[9] M. Bolatkale et al., \"A 4 GHz CT Delta-Sigma ADC with 70 dB DR and -74 dBFS THD in 125 MHz BW,\" IEEE JSSC, 46(12), 2011.",
+        "[10] V. Sukumaran and S. Pavan, \"Low Power Design Techniques for Single-Bit Audio CT Delta-Sigma ADCs Using FIR Feedback,\" IEEE JSSC, 49(11), 2014.",
+        "[11] Y. Zhang, et al., \"A CT Delta-Sigma Modulator for Ultrasound Using Digital ELD Compensation and FIR Feedback,\" IEEE TCAS-I, 62(7), 2015.",
+        "[12] A. Jain and S. Pavan, \"Continuous-Time Delta-Sigma Modulators With Time-Interleaved FIR Feedback,\" IEEE TCAS-I, 65(2), 2018.",
+        "[13] S. Billa, A. Dixit, and S. Pavan, \"Analysis and Design of an Audio CT 1-X FIR-MASH Delta-Sigma Modulator,\" IEEE JSSC, 55(10), 2020.",
+        "[14] G. Theertham, et al., \"Design of High-Resolution CT Delta-Sigma Data Converters With Dual Return-to-Open DACs,\" IEEE JSSC, 57(11), 2022.",
+    ]
+    rbody = get_body(REF)
+    if rbody is not None:
+        rbody.left, rbody.top, rbody.width, rbody.height = Inches(0.7), Inches(1.6), Inches(12.8), Inches(7.6)
+        set_text(rbody.text_frame, [(r, 0, False, 12) for r in refs])
 
     prs.save(OUTPUT)
     return prs

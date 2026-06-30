@@ -1,7 +1,4 @@
-% FIRDSM_sim.m
-% Q2.6C - output psd for a -4 dbfs, 10 mhz input. reproduces fig 22:
-% clean noise-shaped spectrum + the measured-like spectrum (thermal noise sets
-% the floor, isi sets hd2). prints hd2/hd3/snr/sndr. course-style dbfs plot.
+% FIRDSM_sim.m  Q2.6C: output psd at -4 dbfs, 10 mhz (fig 22). ideal + measured-like.
 clear; close all; clc;
 if ~exist('results','dir'), mkdir('results'); end
 
@@ -23,27 +20,27 @@ fprintf('ideal       : SNDR=%.1f SNR=%.1f HD2=%.1f HD3=%.1f dB\n', si.SNDR,si.SN
 fprintf('measured-like: SNDR=%.1f SNR=%.1f HD2=%.1f HD3=%.1f dB\n', sm.SNDR,sm.SNR,sm.HD2,sm.HD3);
 fprintf('paper fig 22 : SNDR=70.3 SNR=74.9 HD2=-73.5 HD3=-79.7 dB\n');
 
-% ---- plot the measured-like psd (course signature style) ----
+%% plot the measured-like psd (course signature style)
 figure('Position',[100 100 950 620]);
 ib = sm.inband_bins; sb = sm.signal_bins;
-semilogx(sm.faxis, sm.fdB, '-', 'Color',[.6 .6 .6], 'LineWidth',1); hold on;
-semilogx(sm.faxis(ib), sm.fdB(ib), 'g', 'LineWidth',3);
-semilogx(sm.faxis(sb), sm.fdB(sb), 'r', 'LineWidth',3);
-xline(p.fb,'b--','LineWidth',1.5);
-hold off; grid on; xlim([1e6 p.fs/2]); ylim([-160 5]);
-xlabel('Frequency (Hz)'); ylabel('Amplitude (dBFS)');
+semilogx(sm.faxis/1e6, sm.fdB, '-', 'Color',[.6 .6 .6], 'LineWidth',1); hold on;
+semilogx(sm.faxis(ib)/1e6, sm.fdB(ib), 'g', 'LineWidth',3);
+semilogx(sm.faxis(sb)/1e6, sm.fdB(sb), 'r', 'LineWidth',3);
+xline(p.fb/1e6,'b--','LineWidth',1.5);
+hold off; grid on; xlim([1 p.fs/2e6]); ylim([-120 5]);   % match paper fig 22 axes
+xlabel('Frequency (MHz)'); ylabel('Amplitude (dBFS)');
 legend('PSD','in-band','main tone','f_b = 36 MHz','Location','southwest');
 title(sprintf('Output PSD, -4 dBFS @ 10 MHz  (SNDR=%.1f, SNR=%.1f, HD2=%.1f, HD3=%.1f dB)',...
       sm.SNDR, sm.SNR, sm.HD2, sm.HD3));
 print(gcf, fullfile('results','FIRDSM_sim_PSD'), '-dpng','-r110');
 
-% ---- ideal vs measured-like overlay (shows the quant-noise floor) ----
+%% ideal vs measured-like overlay (shows the quant-noise floor)
 figure('Position',[100 100 950 620]);
-semilogx(si.faxis, si.fdB, 'b', 'LineWidth',1); hold on;
-semilogx(sm.faxis, sm.fdB, 'r', 'LineWidth',1);
-xline(p.fb,'k--','LineWidth',1.5); hold off; grid on;
-xlim([1e6 p.fs/2]); ylim([-160 5]);
-xlabel('Frequency (Hz)'); ylabel('Amplitude (dBFS)');
+semilogx(si.faxis/1e6, si.fdB, 'b', 'LineWidth',1); hold on;
+semilogx(sm.faxis/1e6, sm.fdB, 'r', 'LineWidth',1);
+xline(p.fb/1e6,'k--','LineWidth',1.5); hold off; grid on;
+xlim([1 p.fs/2e6]); ylim([-130 5]);
+xlabel('Frequency (MHz)'); ylabel('Amplitude (dBFS)');
 legend(sprintf('ideal (SQNR=%.0f dB)',si.SNDR), 'measured-like (thermal+ISI)','f_b','Location','southwest');
 title('Output PSD: ideal quantisation noise vs measured-like (thermal + ISI)');
 print(gcf, fullfile('results','FIRDSM_sim_PSD_ideal_vs_real'), '-dpng','-r110');

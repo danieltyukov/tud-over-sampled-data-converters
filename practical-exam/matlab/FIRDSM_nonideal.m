@@ -7,7 +7,7 @@ clear; close all; clc;
 if ~exist('results','dir'), mkdir('results'); end
 p = firdsm_params(); p.Nfft = 2^15; p.amp = 0.5;
 
-% ---------- Q3.1 finite gain / bw ----------
+%% Q3.1 finite gain / bw
 gains_db = 30:5:70; ugbs = (1:0.5:6)*1e9;
 Sg = zeros(size(gains_db)); Su = zeros(size(ugbs));
 for k=1:numel(gains_db)
@@ -32,7 +32,7 @@ print(gcf, fullfile('results','FIRDSM_nonideal_gainbw'), '-dpng','-r110');
 fprintf('Q3.1: gain 55 dB -> SNDR %.1f; ugb 2 GHz -> SNDR %.1f\n', ...
     interp1(gains_db,Sg,55), interp1(ugbs/1e9,Su,2));
 
-% ---------- Q3.2 fir-dac tap mismatch (linear -> shifts F(z) zeros) ----------
+%% Q3.2 fir-dac tap mismatch (linear -> shifts F(z) zeros)
 fg = linspace(1e6, p.fs/2, 4000); zexp = exp(-1j*2*pi*fg/p.fs);
 figure('Position',[100 100 950 620]);
 Fnom = abs(polyval(fliplr(p.firtaps), zexp));
@@ -51,7 +51,7 @@ print(gcf, fullfile('results','FIRDSM_nonideal_mismatch'), '-dpng','-r110');
 q=p; q.tapmismatch=0.01; [y,st]=firdsm_run(q); s=firdsm_spec(y,q,st.fin);
 fprintf('Q3.2: tap mismatch 1%% -> SNDR=%.1f HD2=%.1f (no new harmonics)\n', s.SNDR, s.HD2);
 
-% ---------- Q3.3 eld + rz dac0 ----------
+%% Q3.3 eld + rz dac0
 elds = 0:0.05:0.6;
 Snorz = zeros(size(elds)); Srz = Snorz;
 for k=1:numel(elds)

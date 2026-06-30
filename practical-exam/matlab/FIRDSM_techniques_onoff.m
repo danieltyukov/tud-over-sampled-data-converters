@@ -1,13 +1,11 @@
-% FIRDSM_techniques_onoff.m
-% Q2.1 - enable/disable the proposed techniques and quantify each.
-% fir dac on/off (under jitter), compensation on/off (off -> unstable),
-% first-tap-zero on/off (metastability). prints a dB table + psd overlay.
+% FIRDSM_techniques_onoff.m  Q2.1: enable/disable fir dac, compensation,
+% first-tap-zero; quantify each in a dB table + psd overlay.
 clear; close all; clc;
 if ~exist('results','dir'), mkdir('results'); end
 
 p = firdsm_params(); p.Nfft = 2^15; p.amp = 0.5;
 jit = 0.003;                    % rms jitter (fraction of Ts) for the fir comparison
-mtau = 0.025;                   % metastability regen time const for ~52 dB hit
+mtau = 0.06;                   % metastability regen time const for ~52 dB hit
 
 run = @(q) deal_spec(q);
 function s = deal_spec(q)
@@ -35,12 +33,12 @@ fprintf('metastability, first-tap-zero ON     : %6.1f   (recovery %.0f dB)\n', s
 
 % psd overlay of the most telling cases
 figure('Position',[100 100 950 620]);
-semilogx(sA.faxis, sA.fdB, 'k', 'LineWidth',1); hold on;
-semilogx(sCoff.faxis, sCoff.fdB, 'r', 'LineWidth',1);
-semilogx(sMoff.faxis, sMoff.fdB, 'm', 'LineWidth',1);
-semilogx(sFoff.faxis, sFoff.fdB, 'b', 'LineWidth',1);
-xline(p.fb,'g--','LineWidth',1.5); hold off; grid on;
-xlim([1e6 p.fs/2]); ylim([-160 5]); xlabel('Frequency (Hz)'); ylabel('Amplitude (dBFS)');
+semilogx(sA.faxis/1e6, sA.fdB, 'k', 'LineWidth',1); hold on;
+semilogx(sCoff.faxis/1e6, sCoff.fdB, 'r', 'LineWidth',1);
+semilogx(sMoff.faxis/1e6, sMoff.fdB, 'm', 'LineWidth',1);
+semilogx(sFoff.faxis/1e6, sFoff.fdB, 'b', 'LineWidth',1);
+xline(p.fb/1e6,'g--','LineWidth',1.5); hold off; grid on;
+xlim([1 p.fs/2e6]); ylim([-160 5]); xlabel('Frequency (MHz)'); ylabel('Amplitude (dBFS)');
 legend(sprintf('full design (%.0f dB)',sA.SNDR), sprintf('comp OFF (unstable)'), ...
        sprintf('metastab, no 1st-tap-zero (%.0f dB)',sMoff.SNDR), ...
        sprintf('FIR off + jitter (%.0f dB)',sFoff.SNDR), 'f_b','Location','southwest');

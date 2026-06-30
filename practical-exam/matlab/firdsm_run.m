@@ -5,7 +5,7 @@ function [y, st] = firdsm_run(p)
 
 rng(p.seed);
 fs = p.fs; ns = p.ns; N = p.Nfft; om = 1/ns;
-a1=p.a(1); a2=p.a(2); a3=p.a(3); a4=p.a(4); g1=p.g1; g2=p.g2; b1=p.b1;
+a2=p.a(2); a3=p.a(3); a4=p.a(4); g1=p.g1; g2=p.g2; b1=p.b1;   % b1 = a(1) (input fb)
 
 % coherent tone (lands in one bin)
 fres = fs/N;
@@ -45,9 +45,8 @@ yh = zeros(1,max(Ntap,2)); firprev = 0; firprev2 = 0; cfprev = 0;
 ix = 0; mx = zeros(1,4);
 
 for k = 1:N
-    % quantizer on last integrator (+ input feed-forward for stf peaking)
-    vq = x4 + p.kff*uc(min(ix+1, numel(uc)));
-    if p.nlev == 2, yk = 2*(vq>=0)-1; else, yk = mbq(vq, p.nlev, 1); end
+    % quantizer on last integrator
+    if p.nlev == 2, yk = 2*(x4>=0)-1; else, yk = mbq(x4, p.nlev, 1); end
     y(k) = yk;
     yh = [yk, yh(1:end-1)];
 
@@ -56,12 +55,10 @@ for k = 1:N
     fbwave(k) = fir;
     if p.comp_on && p.fir_on, cf = yk - fir; else, cf = 0; end
 
-    % per-clock additive error terms injected at the first integrator
-    dfir = fir - firprev;             % fir dac step this clock
-    ejit = dfir*beta(k);              % clock jitter (small fir steps -> small)
+    dfir = fir - firprev;
+    ejit = dfir*beta(k);              % jitter error (small fir steps -> small)
     firprev = fir;
-    % isi: rise/fall asymmetry -> even (hd2) distortion that tracks the signal.
-    % model as alpha * (ac part of u^2); a calibrated digital coeff cancels it.
+    % isi: rise/fall asymmetry -> hd2 ~ signal^2; digital coeff cancels it
     uclk = uc(min(ix+1, numel(uc)));
     eisi = 0;
     if p.isi_on
@@ -75,8 +72,7 @@ for k = 1:N
         emeta = ft(1)*(yk - yh(2))*td;                      % first-tap edge error
     end
 
-    % sub-step integrate, nrz dac held over the clock (eld delays it nd steps).
-    % first int sees the fir error (u-fir); cf added linearly (assisted opamp).
+    % sub-step ct integration; int1 sees the fir error (u-fir), cf added linearly
     for b = 1:ns
         ix = ix + 1; uin = uc(ix);
         if b <= nd, firv = firprev2; cfv = cfprev; else, firv = fir; cfv = cf; end
@@ -90,7 +86,7 @@ for k = 1:N
         in3 = x2 - a3*dv - g2*x4;
         f3 = pbw*f3 + (1-pbw)*in3;  x3 = pl*x3 + om*f3;
         d4 = p.kdac0*(fir+cf) + (1-p.kdac0)*dv;         % rz dac0: prompt fast feedback
-        in4 = x3 - a4*d4;                               % (keeps the fast path prompt under eld)
+        in4 = x3 - a4*d4 + p.kff*uin;                   % input feed-forward (stf peaking)
         f4 = pbw*f4 + (1-pbw)*in4;  x4 = pl*x4 + om*f4;
     end
     % lumped per-clock terms at int1: thermal noise + jitter/isi/meta dac errors
