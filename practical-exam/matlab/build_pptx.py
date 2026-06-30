@@ -340,7 +340,7 @@ def build():
         H("Derivation", 15),
         B("Synthesise 4th-order OBG-1.5 NTF (Butterworth-HP poles bisected for OBG) + 2 optimised zeros"),
         B("Match the loop characteristic polynomial -> CIFB coefficients a, g"),
-        B("F(z) from Eq.(1); E(z) = (1 - F(z))/(1 - z^-1) (DC gain 0)"),
+        B("F(z) from Eq.(1); E(z) = (1 - F(z))/(1 - z^-1); 1-F has a DC zero so comp stays out-of-band"),
         B("Fit H1(s) to the replica path by impulse invariance"),
         C("F(z) is taken from the paper; E(z), a, g and H1(s) were derived. The model reproduces "
           "the OBG-1.5 NTF (Fig 8).", 12),
@@ -370,7 +370,7 @@ def build():
     # ---- slide 4: Q2.2 voltage scaling -------------------------------------
     set_title(Q22, "Q2.2 Voltage scaling")
     body = get_body(Q22)
-    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(5.2), Inches(6.5)
+    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.55), Inches(13.4), Inches(2.1)
     set_text(body.text_frame, [
         H("Assumptions"),
         B("Internal full scale = +-1; quantizer output in {-1, +1}"),
@@ -379,13 +379,13 @@ def build():
         B("States map to the 1.2 V supply / Vref; scaling redistributes gain, loop transfer unchanged"),
         C("the input integrator (most linearity-critical) has the smallest swing; scaling preserves the NTF/STF.", 13),
     ])
-    add_image_fit(Q22, result_img("FIRDSM_scaling.png"), 5.6, 1.9, 8.2, 6.6,
+    add_image_fit(Q22, result_img("FIRDSM_scaling.png"), 1.9, 3.7, 10.4, 6.2,
                   note_name="FIRDSM_scaling.png")
 
     # ---- slide 5: Q2.3 thermal noise ---------------------------------------
     set_title(Q23, "Q2.3 Thermal noise & spectrum")
     body = get_body(Q23)
-    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(5.2), Inches(6.5)
+    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.55), Inches(13.4), Inches(2.1)
     set_text(body.text_frame, [
         H("Thermal noise"),
         B("Input-referred Gaussian noise added at the I4 summing node"),
@@ -394,33 +394,32 @@ def build():
         B("Output PSD in true dBFS so it overlays the paper"),
         C("with the chosen input-referred noise the modulator reaches DR ~ 80 dB over 36 MHz (paper 83).", 13),
     ])
-    add_image_fit(Q23, result_img("FIRDSM_thermal.png"), 5.6, 1.9, 8.2, 6.6,
+    add_image_fit(Q23, result_img("FIRDSM_thermal.png"), 1.9, 3.7, 10.4, 6.2,
                   note_name="FIRDSM_thermal.png")
 
     # ---- slide 6: Q2.4 decimation ------------------------------------------
     set_title(Q24, "Q2.4 Decimation filter")
     body = get_body(Q24)
-    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(6.4), Inches(7.0)
+    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.55), Inches(13.4), Inches(1.9)
     set_text(body.text_frame, [
         H("Decimation filter"),
         B("sinc^(order+1) = sinc^5 CIC, implemented as cascaded box-car averages"),
         B("Decimation factor ~ OSR (50); downsample to ~Nyquist"),
         B("Plot output spectrum before/after decimation + transient waveforms"),
-        B("(bitstream, integrator states, recovered sine)"),
+        B("(bitstream, FIR DAC feedback, recovered sine)"),
         C("decimation removes the out-of-band shaped noise; the in-band SNR is preserved.", 13),
     ])
-    body.width = Inches(5.6)
-    add_image_fit(Q24, result_img("FIRDSM_decimation.png"), 6.2, 1.6, 7.3, 3.9,
+    add_image_fit(Q24, result_img("FIRDSM_decimation.png"), 0.5, 3.55, 7.8, 5.3,
                   note_name="FIRDSM_decimation.png")
-    add_image_fit(Q24, result_img("FIRDSM_transient.png"), 6.2, 5.5, 7.3, 3.9,
+    add_image_fit(Q24, result_img("FIRDSM_transient.png"), 8.1, 3.75, 5.9, 4.6,
                   note_name="FIRDSM_transient.png")
 
     # ---- slide 7: Q2.5 list of simulation results --------------------------
     set_title(Q25, "Q2.5 List of simulation results")
     body = get_body(Q25)
-    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(8.6), Inches(0.4)
-    set_text(body.text_frame, [("Paper results and which were reproduced in MATLAB:", 0, False, 12)])
-    add_table(Q25, 0.45, 2.2, 8.7, 6.6, [
+    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(13.4), Inches(0.4)
+    set_text(body.text_frame, [("Paper results and which were reproduced in MATLAB:", 0, False, 13)])
+    add_table(Q25, 0.45, 2.15, 9.7, 8.1, [
         ["Result", "Paper value", "Repro"],
         ["NTF (Fig 8)", "4th-order, OBG 1.5, notch ~ -90 dB", "yes"],
         ["STF (Fig 9)", "+12 dB peak ~100 MHz", "yes"],
@@ -433,17 +432,17 @@ def build():
         ["Nonlinear integrator (Fig 3)", "floor rise = 4-bit case", "yes"],
         ["ISI correction (Figs 29/30)", "HD2 -15 dB, SNDR -> 74.3", "yes"],
         ["Survey scatter (Figs 23/24)", "BW/DR & P/SNDR clouds", "no (survey)"],
-    ], col_widths=[2.9, 4.4, 1.4], font=12)
-    add_textbox(Q25, 9.3, 2.2, 4.5, 6.6, [
-        H("MATLAB assumptions", 14),
-        B("fs = 3.6 GS/s, OSR = 50", 1, 12),
-        B("Nfft = 2^16", 1, 12),
-        B("window kaiser(N, 20)", 1, 12),
-        B("coherent input tone", 1, 12),
-        B("ns = 20 CT sub-steps/clock", 1, 12),
-        B("rng(1) seeded", 1, 12),
+    ], col_widths=[3.3, 4.8, 1.6], font=14)
+    add_textbox(Q25, 10.4, 2.15, 3.6, 8.1, [
+        H("MATLAB assumptions", 15),
+        B("fs = 3.6 GS/s, OSR = 50", 1, 13),
+        B("Nfft = 2^16", 1, 13),
+        B("window kaiser(N, 20)", 1, 13),
+        B("coherent input tone", 1, 13),
+        B("ns = 20 CT sub-steps/clock", 1, 13),
+        B("rng(1) seeded", 1, 13),
         C("reproduced NTF, STF, PSD, SNR/SNDR-vs-A, jitter (2/26/27), metastability (4), "
-          "nonlinear integrator (3), ISI (29/30); survey scatter (23/24) not reproducible.", 11),
+          "nonlinear integrator (3), ISI (29/30); survey scatter (23/24) not reproducible.", 12),
     ])
 
     # ---- slides 8..16: Q2.6 A..I comparisons -------------------------------
@@ -531,7 +530,7 @@ def build():
 
     q3(Q32, "Q3.2 DAC mismatch", [
         B("A 2-level (1-bit) DAC has NO level mismatch -> intrinsically linear.", 0, 12),
-        B("The 8-tap FIR DAC has unit-element (resistor) mismatch; chose sigma ~ 0.5-1% per tap.", 0, 12),
+        B("The 8-tap FIR DAC has unit-element (resistor) mismatch; plot shows 2% sigma per tap (exaggerated; realistic ~0.5-1%) to make the zero shift visible.", 0, 12),
         B("Mismatch perturbs the F(z) coefficients (a LINEAR change) -> shifts the F(z) zeros / jitter nulls and the realised NTF slightly. No new harmonics.", 0, 12),
         C("FIR-tap mismatch moves the jitter nulls and perturbs the NTF; it does not add distortion (unlike a multi-bit DAC).", 12),
     ], result_img("FIRDSM_nonideal_mismatch.png"), "FIRDSM_nonideal_mismatch.png")
@@ -551,7 +550,7 @@ def build():
     ], result_img("FIRDSM_jitter_psd.png"), "FIRDSM_jitter_psd.png")
 
     q3(Q35, "Q3.5 Integrator non-linearity", [
-        B("Paper: weak cubic on the input integrator I4: i = Gm*vd - G3*vd^3 (Gm/G3 = 1000, '20,20'; Fig 3).", 0, 12),
+        B("Paper: weak cubic on the input integrator I4: i = Gm*vd - G3*vd^3; swept G3 = 0 / 0.1 / 0.3 (Fig 3).", 0, 12),
         B("The input integrator is the dominant one: its non-linearity acts on the unfiltered input/feedback.", 0, 12),
         B("Modelled as a cubic on the I4 input; impact: it folds out-of-band shaped noise in-band -> floor rises.", 0, 12),
         C("the input integrator sets the linearity budget; G3 raises the in-band floor (SNDR 94 -> 76 dB at G3=0.1).", 12),
@@ -598,7 +597,7 @@ def build():
 
     q4(Q45, "Q4.5 Clock: LC-PLL and LC-VCO", [
         B("On-chip LC-PLL: LC-VCO (cross-coupled NMOS, 2x2 nH, MOS varactor + trimmable MIM, 2.4-3.6 GHz), /128, PFD, charge pump, ~100 kHz loop BW.", 0, 12),
-        B("Supplies the low-jitter 3.6 GHz clock; simulated VCO phase noise ~ -120 dBc/Hz @ 1 MHz.", 0, 12),
+        B("Supplies the low-jitter 3.6 GHz clock; LC-VCO phase noise (~-120 dBc/Hz @ 1 MHz class) sets the jitter floor.", 0, 12),
         C("the LC-PLL provides the GS/s clock whose jitter ultimately limits the modulator.", 12),
     ], [(paper_fig("fig18"), "fig18")])
 
@@ -649,14 +648,14 @@ def build():
         body._element.getparent().remove(body._element)
     add_table(Q6, 0.3, 1.6, 13.6, 5.4, [
         ["Design (year)", "Tech / Vdd", "BW", "DR", "pk SNDR", "Power", "FoM_S", "Key feature"],
-        ["This work '12", "90 nm / 1.2 V", "36 MHz", "86@25M", "71@36M", "15 mW", "176.8", "1-bit, 8-tap FIR + analog ELD comp"],
-        ["Bolatkale '11 [6]", "45 nm / 1.1+1.8 V", "125 MHz", "70", "65", "260 mW", "~157", "4-bit CT, cap-FF, direct ELD (no FIR)"],
-        ["Sukumaran '14", "180 nm / 1.8 V", "24 kHz", "103", "98.2", "280 uW", "182.3", "1-bit FIR audio + ISI cal + dither"],
-        ["Zhang-Temes '15", "65 nm / 1.0 V", "15 MHz", "79.4", "74.3", "6.96 mW", "~172.7", "2-bit, 3-tap FIR + digital ELD + DWA"],
-        ["Jain-Pavan '18", "65 nm / 1.4 V", "60 MHz", "76", "67.6", "13.3 mW", "172.5", "1-bit 2x time-interleaved FIR"],
-        ["Billa '20", "180 nm / 1.8 V", "24 kHz", "104", "100.9", "265 uW", "180.5", "1-X FIR-MASH, chopping"],
-        ["Theertham '22", "180 nm / 1.8 V", "250 kHz", "104", "103.2", "17.7 mW", "174.7", "1-bit, 12-tap FIR + dual R2O DAC + chop"],
-    ], col_widths=[1.9, 1.9, 1.1, 1.0, 1.1, 1.2, 1.1, 4.3], font=9)
+        ["This work '12 [1]", "90 nm / 1.2 V", "36 MHz", "83", "70.9", "15 mW", "176.8", "1-bit, 8-tap FIR + analog ELD comp"],
+        ["Bolatkale '11 [9]", "45 nm / 1.1+1.8 V", "125 MHz", "70", "65", "260 mW", "~157", "4-bit CT, cap-FF, direct ELD (no FIR)"],
+        ["Sukumaran '14 [10]", "180 nm / 1.8 V", "24 kHz", "103", "98.2", "280 uW", "182.3", "1-bit FIR audio + ISI cal + dither"],
+        ["Zhang-Temes '15 [11]", "65 nm / 1.0 V", "15 MHz", "79.4", "74.3", "6.96 mW", "~172.7", "2-bit, 3-tap FIR + digital ELD + DWA"],
+        ["Jain-Pavan '18 [12]", "65 nm / 1.4 V", "60 MHz", "76", "67.6", "13.3 mW", "172.5", "1-bit 2x time-interleaved FIR"],
+        ["Billa '20 [13]", "180 nm / 1.8 V", "24 kHz", "104", "100.9", "265 uW", "180.5", "1-X FIR-MASH, chopping"],
+        ["Theertham '22 [14]", "180 nm / 1.8 V", "250 kHz", "104", "103.2", "17.7 mW", "174.7", "1-bit, 12-tap FIR + dual R2O DAC + chop"],
+    ], col_widths=[2.3, 1.9, 1.1, 1.0, 1.1, 1.2, 1.1, 3.9], font=9)
     add_image_fit(Q6, paper_fig("tableII"), 0.3, 7.05, 6.4, 2.45, note_name="tableII")
     add_textbox(Q6, 7.0, 7.1, 6.9, 2.6, [
         H("Where this work sits", 14),
