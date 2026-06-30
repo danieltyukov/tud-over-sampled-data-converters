@@ -354,48 +354,47 @@ def build():
     body = get_body(Q21)
     body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(6.4), Inches(0.5)
     set_text(body.text_frame, [("Each technique enabled then disabled, quantified in-band (36 MHz):", 0, False, 13)])
-    add_table(Q21, 0.45, 2.4, 6.4, 3.0, [
+    add_table(Q21, 0.45, 2.5, 6.6, 4.4, [
         ["Technique", "OFF", "ON"],
         ["Compensation path", "unstable (~ -45 dB)", "~94 dB"],
-        ["First-tap = 0 (metastability)", "~52 dB", "~91 dB"],
+        ["First-tap = 0 (metastability)", "~52 dB", "~94 dB"],
         ["FIR DAC (jitter floor)", "plain 1-bit", "~25 dB lower"],
         ["Ideal SQNR (all on)", "-", "~94 dB"],
-    ], col_widths=[3.1, 1.8, 1.5], font=11)
-    add_image_fit(Q21, result_img("FIRDSM_techniques_onoff.png"), 7.1, 1.7, 6.8, 6.2,
+    ], col_widths=[3.2, 1.9, 1.5], font=14)
+    add_image_fit(Q21, result_img("FIRDSM_techniques_onoff.png"), 7.0, 1.7, 6.9, 7.2,
                   note_name="FIRDSM_techniques_onoff.png")
-    add_textbox(Q21, 0.45, 8.2, 13.4, 1.0, [
-        C("compensation = stability, first-tap-zero = +39 dB (metastability), FIR DAC = ~25 dB "
+    add_textbox(Q21, 0.45, 8.4, 13.4, 1.0, [
+        C("compensation = stability, first-tap-zero = +42 dB (metastability), FIR DAC = ~25 dB "
           "jitter-floor reduction.", 13)])
 
     # ---- slide 4: Q2.2 voltage scaling -------------------------------------
     set_title(Q22, "Q2.2 Voltage scaling")
     body = get_body(Q22)
-    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(6.4), Inches(7.0)
+    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(5.2), Inches(6.5)
     set_text(body.text_frame, [
         H("Assumptions"),
         B("Internal full scale = +-1; quantizer output in {-1, +1}"),
-        B("Integrator output swings scaled to stay below ~0.45 (first-order path saturates last)"),
-        B("States map to the 1.2 V supply / Vref when expressed in volts"),
-        B("Scaling redistributes gain between integrators; the loop transfer is unchanged"),
-        C("scaling preserves the NTF/STF (1-bit modulator) and keeps every integrator swing "
-          "inside the MSA.", 13),
+        B("FIR DAC makes I4 see only the small shaped error (vin - v1): I4 has the smallest swing (~0.03)"),
+        B("Swing grows toward the sign-only quantizer node I1; the first-order (input) path saturates last"),
+        B("States map to the 1.2 V supply / Vref; scaling redistributes gain, loop transfer unchanged"),
+        C("the input integrator (most linearity-critical) has the smallest swing; scaling preserves the NTF/STF.", 13),
     ])
-    add_image_fit(Q22, result_img("FIRDSM_scaling.png"), 7.1, 1.7, 6.8, 7.0,
+    add_image_fit(Q22, result_img("FIRDSM_scaling.png"), 5.6, 1.9, 8.2, 6.6,
                   note_name="FIRDSM_scaling.png")
 
     # ---- slide 5: Q2.3 thermal noise ---------------------------------------
     set_title(Q23, "Q2.3 Thermal noise & spectrum")
     body = get_body(Q23)
-    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(6.4), Inches(7.0)
+    body.left, body.top, body.width, body.height = Inches(0.45), Inches(1.7), Inches(5.2), Inches(6.5)
     set_text(body.text_frame, [
         H("Thermal noise"),
         B("Input-referred Gaussian noise added at the I4 summing node"),
-        B("sigma sized so the in-band floor gives DR ~ 83 dB at 36 MHz (matches Table I)"),
+        B("sigma sized so the in-band floor sets the dynamic range (Table I target 83 dB)"),
         B("Noise is unshaped (flat): it sets the floor, separate from the shaped quantisation noise"),
-        B("Output PSD scaled in dBFS by A*N/2 so it overlays the paper"),
-        C("with the chosen input-referred noise the modulator reaches DR ~ 83 dB over 36 MHz.", 13),
+        B("Output PSD in true dBFS so it overlays the paper"),
+        C("with the chosen input-referred noise the modulator reaches DR ~ 80 dB over 36 MHz (paper 83).", 13),
     ])
-    add_image_fit(Q23, result_img("FIRDSM_thermal.png"), 7.1, 1.7, 6.8, 7.0,
+    add_image_fit(Q23, result_img("FIRDSM_thermal.png"), 5.6, 1.9, 8.2, 6.6,
                   note_name="FIRDSM_thermal.png")
 
     # ---- slide 6: Q2.4 decimation ------------------------------------------
@@ -430,11 +429,11 @@ def build():
         ["Jitter PSD (Fig 2)", "FIR ~ 4-bit, << plain 1-bit", "yes"],
         ["Jitter nulls (Fig 26)", "minima at F(z) zeros ~600/800 MHz", "yes"],
         ["Jitter tolerance (Fig 27)", "~10x vs plain 1-bit", "yes"],
-        ["Metastability (Fig 4)", "52 -> 91 dB", "yes"],
+        ["Metastability (Fig 4)", "52 -> 94 dB (paper 91)", "yes"],
         ["Nonlinear integrator (Fig 3)", "floor rise = 4-bit case", "yes"],
         ["ISI correction (Figs 29/30)", "HD2 -15 dB, SNDR -> 74.3", "yes"],
         ["Survey scatter (Figs 23/24)", "BW/DR & P/SNDR clouds", "no (survey)"],
-    ], col_widths=[2.9, 4.4, 1.4], font=10)
+    ], col_widths=[2.9, 4.4, 1.4], font=12)
     add_textbox(Q25, 9.3, 2.2, 4.5, 6.6, [
         H("MATLAB assumptions", 14),
         B("fs = 3.6 GS/s, OSR = 50", 1, 12),
@@ -476,7 +475,7 @@ def build():
         ("Q2.6G Metastability",
          "In-band PSD with vs without the first-tap explicit delay.",
          "fig04", result_img("FIRDSM_metastability.png"), "FIRDSM_metastability.png",
-         "First-tap-zero recovers ~52 -> ~91 dB."),
+         "First-tap-zero recovers ~52 -> ~94 dB (paper 91)."),
         ("Q2.6H Nonlinear integrator",
          "In-band PSD with a weak cubic on the input integrator I4.",
          "fig03", result_img("FIRDSM_nonlin_integrator.png"), "FIRDSM_nonlin_integrator.png",
@@ -686,7 +685,7 @@ def build():
                   note_name="FIRDSM_isi_sndr_vs_amp.png")
     add_image_fit(Q7, paper_fig("fig30"), 9.4, 4.0, 4.3, 4.5, note_name="fig30")
     add_textbox(Q7, 0.45, 8.7, 13.4, 0.9, [
-        C("ISI correction recovers peak SNDR ~71 -> ~74 dB and drops HD2 ~15 dB (reproduces Figs 29/30).", 13)])
+        C("ISI correction recovers peak SNDR ~71 -> ~76 dB and drops HD2 ~15 dB (reproduces Figs 29/30; paper 74.3).", 13)])
 
     # ---- slide 30: summary -------------------------------------------------
     set_title(SUM, "Summary")

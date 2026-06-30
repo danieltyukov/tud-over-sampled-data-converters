@@ -56,13 +56,14 @@ elds = 0:0.05:0.6;
 Snorz = zeros(size(elds)); Srz = Snorz;
 for k=1:numel(elds)
     q=p; q.eld=elds(k); q.kdac0=0;   [y,st]=firdsm_run(q); s=firdsm_spec(y,q,st.fin);
-    Snorz(k) = ternary(st.unstable, NaN, s.SNDR);
+    Snorz(k) = ternary(st.unstable, -45, s.SNDR);   % unstable -> plot a clear failed level
     q.kdac0=1; [y,st]=firdsm_run(q); s=firdsm_spec(y,q,st.fin);
-    Srz(k) = ternary(st.unstable, NaN, s.SNDR);
+    Srz(k) = ternary(st.unstable, -45, s.SNDR);
 end
 figure('Position',[100 100 950 620]);
 plot(elds, Snorz,'rs-', elds, Srz,'bo-','LineWidth',1.5); grid on;
-xlabel('excess loop delay (fraction of Ts)'); ylabel('SNDR (dB)'); ylim([-50 100]);
+xlabel('excess loop delay (fraction of Ts)'); ylabel('SNDR (dB)'); ylim([-50 105]);
+yline(0,'k:');   % unstable region sits well below the stable ~94 dB
 legend('no ELD comp','with RZ DAC_0','Location','southwest');
 title('Q3.3 ELD degrades/destabilises the loop; RZ DAC_0 restores it');
 print(gcf, fullfile('results','FIRDSM_nonideal_eld'), '-dpng','-r110');
