@@ -11,11 +11,11 @@ fprintf('--- weak cubic on input integrator (1-bit + FIR) ---\n');
 for i = 1:numel(g3list)
     q = p; q.g3 = g3list(i); q.Gm = 1;
     [y,st] = firdsm_run(q); s = firdsm_spec(y,q,st.fin);
-    ibr = s.faxis <= p.fb;
-    semilogx(s.faxis(ibr)/1e6, s.fdB(ibr), col{i}, 'LineWidth',1.2); hold on;
+    ibr = s.faxis <= 60e6;
+    plot(s.faxis(ibr)/1e6, s.fdB(ibr), col{i}, 'LineWidth',1.0); hold on;   % linear x like fig 3
     fprintf('g3=%.2f  SNDR=%.1f dB\n', g3list(i), s.SNDR);
 end
-hold off; grid on; xlim([1 p.fb/1e6]); ylim([-160 -30]);
+hold off; grid on; xlim([1 60]); ylim([-160 -30]);
 xlabel('Frequency (MHz)'); ylabel('In-band PSD (dBFS)');
 legend('G_3=0 (ideal)','G_3=0.1','G_3=0.3','Location','northwest');
 title('Weak cubic on input integrator raises the in-band floor (reproduces Fig. 3)');

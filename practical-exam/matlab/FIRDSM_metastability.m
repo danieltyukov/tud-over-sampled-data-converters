@@ -15,10 +15,10 @@ fprintf('first-tap-zero (1-clk delay) : SNDR=%.1f dB  (recovery %.0f dB)\n', s2.
 fprintf('paper fig 4: ~52 -> ~91 dB\n');
 
 figure('Position',[100 100 950 620]);
-semilogx(s1.faxis/1e6, s1.fdB, 'r', 'LineWidth',1); hold on;
-semilogx(s2.faxis/1e6, s2.fdB, 'b', 'LineWidth',1);
+plot(s1.faxis/1e6, s1.fdB, 'r', 'LineWidth',1); hold on;       % linear x like fig 4
+plot(s2.faxis/1e6, s2.fdB, 'b', 'LineWidth',1);
 xline(p.fb/1e6,'g--','LineWidth',1.5); hold off; grid on;
-xlim([1 60]); ylim([-130 5]); xlabel('Frequency (MHz)'); ylabel('Amplitude (dBFS)');   % paper fig 4 view
+xlim([1 60]); ylim([-130 5]); xlabel('Frequency (MHz)'); ylabel('Amplitude (dBFS)');
 legend(sprintf('metastable, f_1\\neq0 (SNDR %.0f dB)',s1.SNDR), ...
        sprintf('first tap zero (SNDR %.0f dB)',s2.SNDR), 'f_b', 'Location','southwest');
 title('Comparator metastability: effect of zeroing the first FIR tap (reproduces Fig. 4)');
